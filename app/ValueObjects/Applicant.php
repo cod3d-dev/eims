@@ -15,6 +15,7 @@ class Applicant implements Arrayable
         public ?string $middle_name = null,
         public ?string $last_name = null,
         public ?string $second_last_name = null,
+        public ?string $fullname = null,
         public bool $is_tobacco_user = false,
         public bool $is_pregnant = false,
         public bool $is_eligible_for_coverage = false,
@@ -81,6 +82,7 @@ class Applicant implements Arrayable
             middle_name: $data['middle_name'] ?? null,
             last_name: $data['last_name'] ?? null,
             second_last_name: $data['second_last_name'] ?? null,
+            fullname: $data['fullname'] ?? null,
             is_tobacco_user: $data['is_tobacco_user'] ?? false,
             is_pregnant: $data['is_pregnant'] ?? false,
             is_eligible_for_coverage: $data['is_eligible_for_coverage'] ?? false,
@@ -155,8 +157,6 @@ class Applicant implements Arrayable
             'first_name',
             'last_name',
             'phone1',
-            'email_address',
-            'member_ssn',
         ];
     }
 
@@ -199,6 +199,7 @@ class Applicant implements Arrayable
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
             'second_last_name' => $this->second_last_name,
+            'fullname' => $this->fullname,
             'is_tobacco_user' => $this->is_tobacco_user,
             'is_pregnant' => $this->is_pregnant,
             'is_eligible_for_coverage' => $this->is_eligible_for_coverage,

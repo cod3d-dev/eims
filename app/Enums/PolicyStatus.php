@@ -27,7 +27,7 @@ enum PolicyStatus: string implements HasLabel, HasColor
             self::Rejected => 'Rechazada',
             self::Active => 'Activa',
             self::Inactive => 'Inactiva',
-            self::CANCELLED => 'Terminada',
+            self::Cancelled => 'Terminada',
 
         };
     }

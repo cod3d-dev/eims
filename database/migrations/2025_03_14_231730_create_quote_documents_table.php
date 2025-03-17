@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('quote_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('quote_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('quote_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('file_path');
-            $table->string('serial_number')->unique();
-            $table->string('mime_type')->nullable();
-            $table->unsignedBigInteger('file_size')->nullable();
+//            $table->string('serial_number')->unique();
+//            $table->string('mime_type')->nullable();
+//            $table->unsignedBigInteger('file_size')->nullable();
             $table->timestamps();
         });
     }

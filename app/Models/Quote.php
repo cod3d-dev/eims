@@ -66,7 +66,7 @@ class Quote extends Model
         return $this->hasOne(Policy::class);
     }
 
-    public function documents(): HasMany
+    public function quoteDocuments(): HasMany
     {
         return $this->hasMany(QuoteDocument::class);
     }

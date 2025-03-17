@@ -15,10 +15,11 @@ return new class extends Migration
         Schema::create('quotes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('contact_id')->constrained();
+            $table->json('contact_information')->nullable();
             $table->foreignId('user_id')->constrained();
             $table->foreignId('policy_id')->nullable();
             $table->foreignId('insurance_company_id')->nullable();
-            $table->foreignId('insurance_account_id')->nullable();
+            $table->foreignId('agent_id')->nullable();
             $table->foreignId('policy_type_id')->constrained();
             $table->decimal('premium_amount', 10, 2)->nullable();
             $table->decimal('coverage_amount', 12, 2)->nullable();

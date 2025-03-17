@@ -20,7 +20,7 @@ enum QuoteStatus: string implements HasLabel, HasColor
     {
         return match($this) {
             self::Pending => 'Pendiente',
-            self::Send => 'Enviada',
+            self::Sent => 'Enviada',
             self::Accepted => 'Aceptada',
             self::Rejected => 'Rechazada',
             self::Converted => 'Convertida',

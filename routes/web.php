@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
+use App\Filament\Resources\QuoteResource;
 
 Route::get('/', function () {
     return view('welcome');
@@ -18,5 +19,11 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 });
+
+
+
+//Filament::registerResources([
+//    QuoteResource::class,
+//]);
 
 require __DIR__.'/auth.php';

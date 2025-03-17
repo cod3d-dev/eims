@@ -22,6 +22,7 @@ return new class extends Migration
             $table->foreignId('quote_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('agent_id')->nullable()->constrained()->nullOnDelete();
             $table->string('policy_number')->nullable();
+            $table->string('policy_year')->nullable();
             $table->string('kynect_case_number')->nullable(); // Case number in Kynect
             $table->string('insurance_company_policy_number')->nullable(); // Policy number in insurance company system
             $table->string('policy_plan')->nullable();
