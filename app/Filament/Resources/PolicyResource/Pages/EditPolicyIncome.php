@@ -16,6 +16,8 @@ class EditPolicyIncome extends EditRecord
 
     protected static ?string $navigationLabel = 'Ingresos';
 
+    protected static ?string $navigationIcon = 'iconoir-money-square';
+
     public  function form(Form $form): Form
     {
         return $form
@@ -106,7 +108,7 @@ class EditPolicyIncome extends EditRecord
                                     ->label('Hora $')
                                     ->live(onBlur: true)
                                     ->disabled(fn(Forms\Get $get
-                                    ): bool => $get('main_applicant.is_self_employed'))
+                                    ): bool => $get('main_applicant.is_self_employed') ?? false)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -118,7 +120,7 @@ class EditPolicyIncome extends EditRecord
                                     ->label('Horas/Semana')
                                     ->live(onBlur: true)
                                     ->disabled(fn(Forms\Get $get
-                                    ): bool => $get('main_applicant.is_self_employed'))
+                                    ): bool => $get('main_applicant.is_self_employed') ?? false)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -130,7 +132,7 @@ class EditPolicyIncome extends EditRecord
                                     ->label('Hora Extra $')
                                     ->live(onBlur: true)
                                     ->disabled(fn(Forms\Get $get
-                                    ): bool => $get('main_applicant.is_self_employed'))
+                                    ): bool => $get('main_applicant.is_self_employed') ?? false)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -142,7 +144,7 @@ class EditPolicyIncome extends EditRecord
                                     ->label('Extra/Semana')
                                     ->live(onBlur: true)
                                     ->disabled(fn(Forms\Get $get
-                                    ): bool => $get('main_applicant.is_self_employed'))
+                                    ): bool => $get('main_applicant.is_self_employed') ?? false)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -154,7 +156,7 @@ class EditPolicyIncome extends EditRecord
                                     ->label('Semanas por Año')
                                     ->live(onBlur: true)
                                     ->disabled(fn(Forms\Get $get
-                                    ): bool => $get('main_applicant.is_self_employed'))
+                                    ): bool => $get('main_applicant.is_self_employed') ?? false)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -208,6 +210,11 @@ class EditPolicyIncome extends EditRecord
 
                 Forms\Components\Repeater::make('additional_applicants')
                     ->label('Aplicantes Adicionales')
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable(false)
+                    ->collapsible(true)
+                    ->hiddenLabel()
                     ->itemLabel(fn (array $state): ?string => $state['first_name'] . ' ' . $state['middle_name'] . ' ' . $state['last_name'] . ' ' . $state['second_last_name'] )
                     ->schema([
                         Forms\Components\TextInput::make('main_applicant.employer_1_name')
@@ -320,7 +327,9 @@ class EditPolicyIncome extends EditRecord
                                 Forms\Get $get
                             ) => static::calculateYearlyIncome('main', $state, $set,
                                 $get)),
-                    ])->columns(6)->columnSpanFull(),
+                    ])->columns(6)->columnSpanFull()
+                    ->collapseAllAction(fn (\Filament\Forms\Components\Actions\Action $action) => $action->hidden())
+                    ->expandAllAction(fn (\Filament\Forms\Components\Actions\Action $action) => $action->hidden()),
             ])->columns(4);
 
     }

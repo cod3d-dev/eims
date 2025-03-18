@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('policy_id')->constrained();
             $table->foreignId('document_type_id')->constrained();
-            $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('name');
             $table->string('status')->nullable();
             $table->string('file_name')->nullable();

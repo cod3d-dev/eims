@@ -19,6 +19,8 @@ class EditPolicyContact extends EditRecord
 
     protected static ?string $navigationLabel = 'Cliente';
 
+    protected static ?string $navigationIcon = 'eos-perm-contact-calendar-o';
+
     public  function form(Form $form): Form
     {
         return $form

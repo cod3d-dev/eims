@@ -13,6 +13,7 @@ class EditPolicy extends EditRecord
     protected static string $resource = PolicyResource::class;
 
     protected static ?string $navigationLabel = 'Poliza';
+    protected static ?string $navigationIcon = 'iconoir-privacy-policy';
 
     protected function getHeaderActions(): array
     {

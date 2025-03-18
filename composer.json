@@ -8,12 +8,16 @@
     "require": {
         "php": "^8.2",
         "andreiio/blade-iconoir": "^4.6",
+        "codeat3/blade-carbon-icons": "^2.34",
+        "codeat3/blade-eos-icons": "^1.15",
+        "codeat3/blade-google-material-design-icons": "^1.20",
+        "codeat3/blade-teeny-icons": "^1.11",
         "filament/filament": "^3.2",
+        "koenhendriks/laravel-str-acronym": "@dev",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "livewire/flux": "^2.0",
-        "livewire/volt": "^1.7.0",
-        "koenhendriks/laravel-str-acronym": "@dev"
+        "livewire/volt": "^1.7.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",

@@ -52,7 +52,7 @@ class PolicyResource extends Resource
     // protected static ?string $navigationGroup = 'Polizas';
     protected static ?int $navigationSort = 2;
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
 
 
     public static function getRecordSubNavigation(Page $page): array
@@ -63,6 +63,9 @@ class PolicyResource extends Resource
             Pages\EditPolicyContact::class,
             Pages\EditPolicyApplicants::class,
             Pages\EditPolicyIncome::class,
+            Pages\ManagePolicyDocument::class,
+            Pages\ManagePolicyIssues::class
+
         ]);
     }
 
@@ -124,19 +127,23 @@ class PolicyResource extends Resource
                                     ->options(PolicyStatus::class),
                                 Forms\Components\Select::make('document_status')
                                     ->columnSpan(2)
-                                    ->label('Estatus Documentos')
+                                    ->label('Documentos')
                                     ->options(DocumentStatus::class),
+                                Forms\Components\Toggle::make('client_notified')
+                                    ->inline(false)
+                                    ->label('Notificado'),
                                 Forms\Components\Toggle::make('autopay')
                                     ->inline(false)
                                     ->label('Cotizacion'),
                                 Forms\Components\Toggle::make('initial_paid')
                                     ->inline(false)
-                                    ->label('Pagaga'),
+                                    ->label('Pagada'),
                                 Forms\Components\Toggle::make('aca')
                                     ->inline(false)
-                                    ->label('ACA'),
+                                    ->label('ACA')
+                                    ->disabled(fn (?Policy $record): bool => $record->contact->state_province !== UsState::KENTUCKY),
                                 ])
-                            ->columns([ 'md' => 7, 'lg' => 7 ])
+                            ->columns([ 'md' => 8, 'lg' => 8 ])
                             ->columnSpanFull(),
                         ])->columns(['md' => 4, 'lg' => 4]),
             ]);
@@ -409,7 +416,8 @@ class PolicyResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\DocumentsRelationManager::class,
+            RelationManagers\IssuesRelationManager::class,
+//            RelationManagers\DocumentsRelationManager::class,
         ];
     }
 
@@ -476,6 +484,9 @@ class PolicyResource extends Resource
             'edit-contact' => Pages\EditPolicyContact::route('/{record}/edit/contact'),
             'edit-applicants' => Pages\EditPolicyApplicants::route('/{record}/edit/applicants'),
             'edit-income' => Pages\EditPolicyIncome::route('/{record}/edit/income'),
+            'documents' => Pages\ManagePolicyDocument::route('/{record}/documents'),
+            'issues' => Pages\ManagePolicyIssues::route('/{record}/issues'),
+//            'issues' => Pages\ManagePolicyDocument::route('/{record}/documents'),
         ];
     }
 }

@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PolicyDocument extends Model
 {
@@ -12,6 +14,10 @@ class PolicyDocument extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    protected $casts = [
+        'status' => DocumentStatus::class,
+    ];
 
     public function policy(): BelongsTo
     {
@@ -23,7 +29,7 @@ class PolicyDocument extends Model
         return $this->belongsTo(DocumentType::class);
     }
 
-    public function uploader(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }

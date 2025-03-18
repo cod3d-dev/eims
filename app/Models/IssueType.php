@@ -9,4 +9,6 @@ class IssueType extends Model
 {
     /** @use HasFactory<\Database\Factories\IssueTypeFactory> */
     use HasFactory;
+
+    protected $guarded  = [];
 }

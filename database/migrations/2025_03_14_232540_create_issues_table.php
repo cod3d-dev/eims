@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('policy_id')->constrained()->cascadeOnDelete();
             $table->foreignId('issue_type_id')->constrained();
-            $table->text('description');
-            $table->enum('status', ['to_review', 'processing', 'to_send', 'sent', 'resolved', 'no_solution'])->default('to_review');
+            $table->string('description');
+            $table->string('status')->nullable();
             $table->text('proposed_solution')->nullable();
             $table->text('email_message')->nullable();
             $table->date('verification_date')->nullable();
