@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\IssueStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +16,8 @@ class Issue extends Model
 
     protected $casts = [
         'verification_date' => 'date',
-        'notes' => 'array'
+        'notes' => 'array',
+        'status' => IssueStatus::class
     ];
 
     public function policy(): BelongsTo

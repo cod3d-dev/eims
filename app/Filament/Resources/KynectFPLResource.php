@@ -19,6 +19,12 @@ class KynectFPLResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = 'Ajustes';
+//    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationLabel = 'Kynect FPL';
+    protected static ?string $modelLabel = 'Kynect FPL';
+    protected static ?string $pluralModelLabel = 'Kynect FPL';
     public static function form(Form $form): Form
     {
         return $form

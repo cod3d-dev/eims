@@ -19,6 +19,13 @@ class IssueTypeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = 'Ajustes';
+//    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationLabel = 'Tipos de Problemas';
+    protected static ?string $modelLabel = 'Problema';
+    protected static ?string $pluralModelLabel = 'Problemas';
+
     public static function form(Form $form): Form
     {
         return $form

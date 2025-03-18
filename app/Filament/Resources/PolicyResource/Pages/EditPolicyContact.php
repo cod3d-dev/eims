@@ -36,16 +36,29 @@ class EditPolicyContact extends EditRecord
                                     ->label('Primer Nombre')
                                     ->required(),
                                 Forms\Components\TextInput::make('middle_name')
-                                    ->label('Segundo Nombre')
-                                    ->required(),
+                                    ->label('Segundo Nombre'),
                                 Forms\Components\TextInput::make('last_name')
                                     ->label('Apellido')
                                     ->required(),
                                 Forms\Components\TextInput::make('second_last_name')
-                                    ->label('Segundo Apellido')
-                                    ->required(),
+                                    ->label('Segundo Apellido'),
                                 Forms\Components\DatePicker::make('date_of_birth')
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha de Nacimiento')
+                                    ->live(onBlur: true)
+                                    ->afterStateHydrated(function ($state, Forms\Set $set) {
+                                        if ($state) {
+                                            $birthDate = \Carbon\Carbon::parse($state);
+                                            $age = $birthDate->age;
+                                            $set('age', $age);
+                                        }
+                                    })
+                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                        if ($state) {
+                                            $birthDate = \Carbon\Carbon::parse($state);
+                                            $age = $birthDate->age;
+                                            $set('age', $age);
+                                        }
+                                    }),
                                 Forms\Components\TextInput::make('age')
                                     ->label('Edad')
                                     ->disabled()

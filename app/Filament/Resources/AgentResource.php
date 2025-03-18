@@ -19,6 +19,13 @@ class AgentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = 'Ajustes';
+//    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationLabel = 'Agentes ';
+    protected static ?string $modelLabel = 'Agente';
+    protected static ?string $pluralModelLabel = 'Agentes';
+
     public static function form(Form $form): Form
     {
         return $form

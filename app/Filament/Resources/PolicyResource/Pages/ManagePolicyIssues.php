@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PolicyResource\Pages;
 
 use App\Enums\IssueStatus;
 use App\Filament\Resources\PolicyResource;
+use App\Models\Issue;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,6 +12,7 @@ use Filament\Resources\Pages\ManageRelatedRecords;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ManagePolicyIssues extends ManageRelatedRecords
@@ -87,7 +89,11 @@ class ManagePolicyIssues extends ManageRelatedRecords
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
+                        unset($data['new_note']);
+                        return $data;
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

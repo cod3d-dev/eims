@@ -45,12 +45,15 @@ class PolicyResource extends Resource
 {
     protected static ?string $model = Policy::class;
     protected static ?string $navigationIcon = 'iconoir-privacy-policy';
+
+    protected static ?string $navigationGroup = 'Polizas';
+    protected static ?int $navigationSort = 2;
+
+
     protected static ?string $navigationLabel = 'Polizas';
     protected static ?string $modelLabel = 'Poliza';
     protected static ?string $pluralModelLabel = 'Polizas';
 
-    // protected static ?string $navigationGroup = 'Polizas';
-    protected static ?int $navigationSort = 2;
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
 
@@ -63,6 +66,7 @@ class PolicyResource extends Resource
             Pages\EditPolicyContact::class,
             Pages\EditPolicyApplicants::class,
             Pages\EditPolicyIncome::class,
+            Pages\EditPolicyPayments::class,
             Pages\ManagePolicyDocument::class,
             Pages\ManagePolicyIssues::class
 
@@ -111,14 +115,20 @@ class PolicyResource extends Resource
                             ->label('Efectiva Desde'),
                         Forms\Components\DatePicker::make('expiration_date')
                             ->label('Vencimiento'),
-                        Forms\Components\TextInput::make('policy_plan')
-                            ->label('Plan'),
-                        Forms\Components\TextInput::make('policy_total_cost')
-                            ->label('Costo Poliza'),
-                        Forms\Components\TextInput::make('policy_total_subsidy')
-                            ->label('Subsidio'),
-                        Forms\Components\TextInput::make('premium_amount')
-                            ->label('Prima'),
+                        Forms\Components\Grid::make('')
+                            ->schema([
+                                Forms\Components\TextInput::make('policy_plan')
+                                    ->label('Plan'),
+                                Forms\Components\TextInput::make('kynect_case_number')
+                                    ->label('Caso Kynect'),
+                                Forms\Components\TextInput::make('policy_total_cost')
+                                    ->label('Costo Poliza'),
+                                Forms\Components\TextInput::make('policy_total_subsidy')
+                                    ->label('Subsidio'),
+                                Forms\Components\TextInput::make('premium_amount')
+                                    ->label('Prima'),
+                                ])->columns(5)->columnSpanFull(),
+
                         Forms\Components\Fieldset::make()
                             ->schema([
                                 Forms\Components\Select::make('status')
@@ -141,7 +151,7 @@ class PolicyResource extends Resource
                                 Forms\Components\Toggle::make('aca')
                                     ->inline(false)
                                     ->label('ACA')
-                                    ->disabled(fn (?Policy $record): bool => $record->contact->state_province !== UsState::KENTUCKY),
+                                    ->disabled(fn (?Policy $record): bool => $record && $record->contact->state_province !== UsState::KENTUCKY),
                                 ])
                             ->columns([ 'md' => 8, 'lg' => 8 ])
                             ->columnSpanFull(),
@@ -479,13 +489,15 @@ class PolicyResource extends Resource
         return [
             'index' => Pages\ListPolicies::route('/'),
             'create' => Pages\CreatePolicy::route('/create'),
-//            'view' => Pages\ViewPolicy::route('/{record}'),
+            'view' => Pages\ViewPolicy::route('/{record}'),
+//            'view-contact' => Pages\ViewPolicyContact::route('/{record}/contact'),
             'edit' => Pages\EditPolicy::route('/{record}/edit'),
             'edit-contact' => Pages\EditPolicyContact::route('/{record}/edit/contact'),
             'edit-applicants' => Pages\EditPolicyApplicants::route('/{record}/edit/applicants'),
             'edit-income' => Pages\EditPolicyIncome::route('/{record}/edit/income'),
             'documents' => Pages\ManagePolicyDocument::route('/{record}/documents'),
             'issues' => Pages\ManagePolicyIssues::route('/{record}/issues'),
+            'payments' => Pages\EditPolicyPayments::route('/{record}/payments'),
 //            'issues' => Pages\ManagePolicyDocument::route('/{record}/documents'),
         ];
     }

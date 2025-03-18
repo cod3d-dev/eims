@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\Gender;
+use App\Enums\MaritialStatus;
 use App\Filament\Resources\ContactResource\Pages;
 use App\Models\Contact;
 use App\Models\User;
@@ -67,23 +69,11 @@ class ContactResource extends Resource
                                 Forms\Components\DatePicker::make('date_of_birth')
                                     ->label('Fecha de Nacimiento'),
                                 Forms\Components\Select::make('gender')
-                                    ->options([
-                                        'male' => 'Masculino',
-                                        'female' => 'Femenino',
-                                        'other' => 'Otro',
-                                        'prefer_not_to_say' => 'Prefiero no decir',
-                                    ])
+                                    ->options(Gender::class)
                                     ->label('Género'),
                                 Forms\Components\Select::make('marital_status')
-                                    ->options([
-                                        'single' => 'Soltero',
-                                        'married' => 'Casado',
-                                        'divorced' => 'Divorciado',
-                                        'widowed' => 'Viudo',
-                                        'separated' => 'Separado',
-                                    ])
+                                    ->options(MaritialStatus::class)
                                     ->label('Estado Civil'),
-
                             ]),
                         Forms\Components\Toggle::make('is_lead')
                             ->label('Prospecto')
@@ -100,7 +90,6 @@ class ContactResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('email_address')
                             ->email()
-                            ->required()
                             ->label('Correo Electrónico')
                             ->columnSpan(1),
                         Forms\Components\TextInput::make('phone')
