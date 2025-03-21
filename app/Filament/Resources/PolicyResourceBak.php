@@ -20,13 +20,11 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Illuminate\Pagination\CursorPaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\View\View;
 use Filament\Notifications\Notification;
@@ -44,7 +42,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use App\Enums\UsState;
 
 
-class PolicyResource extends Resource
+class PolicyResourceBak extends Resource
 {
     protected static ?string $model = Policy::class;
     protected static ?string $navigationIcon = 'iconoir-privacy-policy';
@@ -73,7 +71,7 @@ class PolicyResource extends Resource
             'Tipo' => $record->policyType->name ?? null,
             'Año' => $record->policy_year,
             // Return Pagado if $record->initial_paid is true
-            'Estatus' => (string) (($record->initial_paid === true ? 'Pagado' : 'Sin Pagar') . ' / Documentos: ' . ($record->document_status->getLabel())),
+            'Estatus' => ($record->initial_paid === true ? 'Pagado' : 'Sin Pagar') . ' / Documentos: ' . (DocumentStatus::from($record->document_status)->getLabel()),
             'Cliente Notificado' => ($record->client_notified === true ? 'Sí' : 'No') . ($record->contact->state_province == 'KY' ? ' / ACA: ' . ($record->aca === true ? 'Sí' : 'No') : ''),
 
         ];
@@ -192,8 +190,6 @@ class PolicyResource extends Resource
             ]);
     }
 
-
-
     public static function table(Table $table): Table
     {
         return $table
@@ -259,36 +255,47 @@ class PolicyResource extends Resource
                         'Raul Medrano' => 'purple',
                     })
                     ->toggleable(),
-                Tables\Columns\ColumnGroup::make('Estatus', [
-                    Tables\Columns\BooleanColumn::make('client_notified')
-                        ->label('Informado')
-                        ->sortable(),
-                    Tables\Columns\BooleanColumn::make('autopay')
-                        ->label('Autopay')
-                        ->sortable(),
-                    Tables\Columns\BooleanColumn::make('initial_paid')
-                        ->label('Inicial')
-                        ->sortable(),
-                    Tables\Columns\BooleanColumn::make('aca')
-                        ->label('ACA')
-                        ->sortable(),
-                    Tables\Columns\TextColumn::make('document_status')
-                        ->label('Documentos')
-                        ->sortable()
-                        ->badge()
-                        ->action(
-                            Tables\Actions\Action::make('viewPendingDocuments')
-                                ->label('Ver Documentos Pendientes')
-                                ->icon('heroicon-m-document-text')
-                                ->modalHeading('Documentos Pendientes')
-                                ->modalDescription(fn (Policy $record): string => "Documentos pendientes para la póliza #{$record->id}")
-                                ->modalContent(fn (Policy $record): View => view(
-                                    'filament.resources.policy-resource.pending-documents',
-                                    ['documents' => $record->documents()->where('status', DocumentStatus::Pending)->get()]
-                                ))
-                                ->modalWidth(MaxWidth::Medium)
-                        ),
-                ]),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->label('Estado')
+                    ->badge()
+                    ->sortable(),
+                Tables\Columns\BooleanColumn::make('client_notified')
+                    ->label('Informado')
+                    ->sortable(),
+                Tables\Columns\BooleanColumn::make('autopay')
+                    ->label('Autopay')
+                    ->sortable(),
+                Tables\Columns\BooleanColumn::make('initial_paid')
+                    ->label('Inicial')
+                    ->sortable(),
+                Tables\Columns\BooleanColumn::make('aca')
+                    ->label('ACA')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('document_status')
+                    ->label('Documentos')
+                    ->sortable()
+                    ->badge()
+                    ->action(
+                        Tables\Actions\Action::make('viewPendingDocuments')
+                            ->label('Ver Documentos Pendientes')
+                            ->icon('heroicon-m-document-text')
+                            ->color(fn (string $state): string => DocumentStatus::tryFrom($state)->color() ?? 'gray')
+                            ->modalHeading('Documentos Pendientes')
+                            ->modalDescription(fn (Policy $record): string => "Documentos pendientes para la póliza #{$record->id}")
+                            ->modalContent(fn (Policy $record): View => view(
+                                'filament.resources.policy-resource.pending-documents',
+                                ['documents' => $record->documents()->where('status', DocumentStatus::PENDING)->get()]
+                            ))
+                            ->modalWidth(MaxWidth::Medium)
+                    ),
+                Tables\Columns\TextColumn::make('premium_amount')
+                    ->label('Prima')
+                    ->money('usd')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    // hidenn on md
+                    ->visibleFrom('xl'),
                 Tables\Columns\TextColumn::make('effective_date')
                     ->label('Fecha de inicio')
                     ->date('d/m/Y')

@@ -146,9 +146,11 @@ class IssueResource extends Resource
                     })
                     ->modalContent(function (Collection $records): View {
                         return view('filament.resources.issue.views.view-messages', [
-                            'messages' => $records->pluck('email_message')->filter()->join("\n\n---\n\n")
+                            'messages' => $records->map(function ($record) {
+                                return "Case #: {$record->policy->kynect_case_number}: {$record->email_message}";
+                            })->filter()->join("\n\n---\n\n")
                         ]);
-                    })
+                    }) // Message
                     ->modalSubmitAction(false)
                     ->modalCancelAction(false)
             ]);

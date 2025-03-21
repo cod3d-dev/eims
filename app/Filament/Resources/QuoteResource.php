@@ -14,6 +14,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Wizard;
@@ -49,6 +50,24 @@ class QuoteResource extends Resource
 //    {
 //        return true;
 //    }
+
+public static function getGloballySearchableAttributes(): array
+    {
+        return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Cliente' => $record->contact->full_name,
+            'Tipo' => $record->policyType->name ?? null,
+            'Año' => $record->year,
+            // Return Pagado if $record->initial_paid is true
+            'Estatus' => $record->status->getLabel(),
+        ];
+    }
+
+
     public static function form(Form $form): Form
     {
         return $form
@@ -821,8 +840,8 @@ class QuoteResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()
-                        ->url(fn (Quote $record): ?string => route('filament.admin.resources.quotes.view', ['record' => $record->id])),
+                    // Tables\Actions\ViewAction::make()
+                    //     ->url(fn (Quote $record): ?string => route('filament.admin.resources.quotes.view', ['record' => $record->id])),
 //                    Tables\Actions\Action::make('print')
 //                        ->url(fn (Quote $record): string => route('filament.app.resources.health-sherpas.print', $record))
 //                        ->label('Imprimir')

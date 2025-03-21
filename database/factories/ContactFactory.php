@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\UsState;
+use App\Enums\ImmigrationStatus;
 use App\Models\Contact;
 use App\Models\User;
 use Carbon\Carbon;
@@ -19,10 +21,20 @@ class ContactFactory extends Factory
      */
     protected $model = Contact::class;
 
+    /**
+     * The Faker instance for this factory.
+     *
+     * @var \Faker\Generator
+     */
+    public $faker;
+
+    /**
+     * Create a new factory instance.
+     */
     public function __construct()
     {
         parent::__construct();
-        $this->faker = \Faker\Factory::create('es_ES');
+        $this->faker = \Faker\Factory::create('es_VE');
     }
 
     /**
@@ -32,11 +44,12 @@ class ContactFactory extends Factory
      */
     public function definition(): array
     {
-        $user = User::inRandomOrder()->first();
-        if (!$user) {
+        $users = User::all();
+        if ($users->isEmpty()) {
             throw new \RuntimeException('No users found in the database. Please seed users first.');
         }
 
+        $user = $users->random();
         $isPhysicalAddressSameAsMailing = $this->faker->boolean(80);
 
         return [
@@ -91,8 +104,8 @@ class ContactFactory extends Factory
             'annual_income_3' => $this->faker->optional(0.1)->randomFloat(2, 20000, 150000),
 
             // Immigration/Legal Documents
-            'immigration_status' => $this->faker->optional()->randomElement(['citizen', 'permanent_resident', 'temporary_resident', 'visa_holder']),
-            'immigration_status_category' => $this->faker->optional()->randomElement(['employment', 'family', 'student', 'refugee']),
+            'immigration_status' => $this->faker->optional()->randomElement(ImmigrationStatus::cases())->value,
+            // 'immigration_status_category' => $this->faker->optional()->randomElement(ImmigrationStatusCategory::cases())->value,
             'passport_number' => $this->faker->optional()->regexify('[A-Z][0-9]{8}'),
             'uscis_number' => $this->faker->optional()->regexify('[0-9]{9}'),
             'ssn' => $this->faker->optional()->regexify('[0-9]{3}-[0-9]{2}-[0-9]{4}'),
@@ -108,7 +121,7 @@ class ContactFactory extends Factory
             'address_line_1' => $this->faker->optional()->streetAddress(),
             'address_line_2' => $this->faker->optional(0.3)->secondaryAddress(),
             'city' => $this->faker->optional()->city(),
-            'state_province' => $this->faker->optional()->state(),
+            'state_province' => $this->faker->optional()->randomElement(UsState::cases())->value,
             'zip_code' => $this->faker->optional()->postcode(),
             'county' => $this->faker->optional()->city(),
 
@@ -117,7 +130,7 @@ class ContactFactory extends Factory
             'mailing_address_line_1' => $isPhysicalAddressSameAsMailing ? null : $this->faker->streetAddress(),
             'mailing_address_line_2' => $isPhysicalAddressSameAsMailing ? null : $this->faker->optional(0.3)->secondaryAddress(),
             'mailing_city' => $isPhysicalAddressSameAsMailing ? null : $this->faker->city(),
-            'mailing_state_province' => $isPhysicalAddressSameAsMailing ? null : $this->faker->state(),
+            'mailing_state_province' => $isPhysicalAddressSameAsMailing ? null : $this->faker->randomElement(UsState::cases())->value,
             'mailing_zip_code' => $isPhysicalAddressSameAsMailing ? null : $this->faker->postcode(),
         ];
     }

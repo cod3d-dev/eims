@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\DocumentStatus;
+use App\Enums\PolicyStatus;
 use App\Filament\Resources\PolicyDocumentResource\Pages;
 use App\Filament\Resources\PolicyDocumentResource\RelationManagers;
 use App\Models\PolicyDocument;
@@ -19,6 +21,10 @@ class PolicyDocumentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $pluralLabel = 'Documentos';
+    protected static ?string $singularLabel = 'Documento';
+
+
     public static function form(Form $form): Form
     {
         return $form
@@ -34,8 +40,8 @@ class PolicyDocumentResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('status')
-                    ->maxLength(255),
+                Forms\Components\Select::make('status')
+                    ->options(DocumentStatus::class),
                 Forms\Components\TextInput::make('file_name')
                     ->maxLength(255),
                 Forms\Components\TextInput::make('original_name')
@@ -68,15 +74,6 @@ class PolicyDocumentResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('file_name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('original_name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('mime_type')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('size')
-                    ->numeric()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('due_date')
                     ->date()
                     ->sortable(),

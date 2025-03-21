@@ -60,5 +60,7 @@ class ContactSeeder extends Seeder
             Contact::create($contact);
             // dd($contact);
         }
+
+        Contact::factory(5000)->create();
     }
 }

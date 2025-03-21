@@ -13,6 +13,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model;
 
 class ContactResource extends Resource
@@ -29,9 +30,12 @@ class ContactResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'full_name';
 
-    // protected static ?string $navigationGroup = 'Polizas';
-
     protected static ?int $navigationSort = 2;
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['first_name', 'middle_name', 'last_name', 'second_last_name'];
+    }
 
     public static function form(Form $form): Form
     {

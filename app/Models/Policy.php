@@ -49,6 +49,8 @@ class Policy extends Model
         'is_renewal' => 'boolean',
         'renewed_at' => 'datetime',
         'renewal_status' => RenewalStatus::class,
+        'status' => PolicyStatus::class,
+        'document_status'   => DocumentStatus::class
     ];
 
     protected function casts(): array
