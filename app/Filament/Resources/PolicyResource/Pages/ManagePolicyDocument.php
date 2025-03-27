@@ -51,6 +51,8 @@ class ManagePolicyDocument extends ManageRelatedRecords
 //                    ->label('Subido por')
 //                    ->relationship('user', 'name')
 //                    ->required(),
+                Forms\Components\Hidden::make('user_id')
+                    ->default(auth()->user()->id),
                 Forms\Components\Select::make('status')
                     ->label('Estado')
                     ->options(DocumentStatus::class)

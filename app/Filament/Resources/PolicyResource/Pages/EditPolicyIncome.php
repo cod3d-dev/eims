@@ -8,7 +8,7 @@ use Filament\Actions;
 use Filament\Forms\Form;
 use Filament\Forms;
 use Filament\Resources\Pages\EditRecord;
-
+use Illuminate\Support\Carbon;
 
 class EditPolicyIncome extends EditRecord
 {
@@ -28,48 +28,35 @@ class EditPolicyIncome extends EditRecord
                     ->required()
                     ->extraInputAttributes(['class' => 'text-center'])
                     ->default(1)
-                    ->reactive(),
+                    ->live()
+                    ->afterStateUpdated(function (string $state, Forms\Set $set) {
+                        $latestYear = \App\Models\KynectFPL::getLatestYear();
+                        $kinectKPL = \App\Models\KynectFPL::threshold($latestYear, (int) $state);
+                        $set('kynect_fpl_threshold', number_format($kinectKPL * 12, 2, '.', ','));
+                    }),
                 Forms\Components\TextInput::make('total_applicants')
 //                    ->numeric()
                     ->label('Total Solicitantes')
                     ->required()
                     ->extraInputAttributes(['class' => 'text-center'])
-                    ->default(1)
-                    ->reactive()
-                    ->live()
-                    ->minValue(0)
-                    ->afterStateUpdated(function (Set $set, Get $get, ?int $state, ?int $old): void {
-                        if (is_null($state)) {
-                            $set('additional_applicants', []);
-                            return;
-                        }
-
-                        $additionalApplicants = $get('additional_applicants') ?? [];
-                        $applicantsCount = count($additionalApplicants);
-                        $itemsToBeAdded = $state - 1 - $applicantsCount;
-
-                        if ($itemsToBeAdded > 0) {
-                            for ($i = 0; $i < $itemsToBeAdded; $i++) {
-                                $additionalApplicants[] = [];
-                            }
-                            // dd($applicants);
-                        } else {
-                            if ($itemsToBeAdded < 0) {
-                                for ($i = 0; $i < abs($itemsToBeAdded); $i++) {
-                                    array_pop($additionalApplicants);
-                                }
-                            }
-                        }
-
-                        $set('additional_applicants', $additionalApplicants);
-                    }),
+                    ->default(1),
                 Forms\Components\TextInput::make('estimated_household_income')
                     ->label('Ingreso Familiar Estimado')
                     ->prefix('$')
                     ->disabled()
-                    ->extraInputAttributes(['class' => 'text-end'])
-                    ->formatStateUsing(fn ($state) => number_format($state , 2, '.', ','))
-                    ->live(onBlur: true),
+                    ->extraInputAttributes(function (Forms\Get $get) {
+                        $income = floatval(str_replace(',', '', $get('estimated_household_income') ?? 0));
+                        $threshold = floatval(str_replace(',', '', $get('kynect_fpl_threshold') ?? 0));
+                        
+                        $classes = 'text-end';
+                        
+                        if ($income < $threshold) {
+                            $classes .= ' custom-input-color-red';
+                        }
+                        
+                        return ['class' => $classes];
+                    })
+                    ->formatStateUsing(fn ($state) => number_format($state , 2, '.', ',')),
                 Forms\Components\TextInput::make('kynect_fpl_threshold')
                     ->label('Ingresos Requeridos Kynect')
                     ->disabled()
@@ -217,80 +204,80 @@ class EditPolicyIncome extends EditRecord
                     ->hiddenLabel()
                     ->itemLabel(fn (array $state): ?string => $state['first_name'] . ' ' . $state['middle_name'] . ' ' . $state['last_name'] . ' ' . $state['second_last_name'] )
                     ->schema([
-                        Forms\Components\TextInput::make('main_applicant.employer_1_name')
+                        Forms\Components\TextInput::make('employer_1_name')
                             ->label('Empleador'),
-                        Forms\Components\TextInput::make('main_applicant.employer_1_role')
+                        Forms\Components\TextInput::make('employer_1_role')
                             ->label('Cargo'),
-                        Forms\Components\TextInput::make('main_applicant.employer_1_phone')
+                        Forms\Components\TextInput::make('employer_1_phone')
                             ->label('Teléfono'),
-                        Forms\Components\TextInput::make('main_applicant.employer_1_address')
+                        Forms\Components\TextInput::make('employer_1_address')
                             ->label('Dirección')
                             ->columnSpan(3),
-                        Forms\Components\TextInput::make('main_applicant.income_per_hour')
+                        Forms\Components\TextInput::make('income_per_hour')
                             ->numeric()
                             ->label('Hora $')
                             ->live(onBlur: true)
                             ->disabled(fn(Forms\Get $get
-                            ): bool => $get('main_applicant.is_self_employed') ?? false)
+                            ): bool => $get('is_self_employed') ?? false)
                             ->afterStateUpdated(fn(
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
-                            ) => static::calculateYearlyIncome('main', $state, $set,
+                            ) => static::calculateYearlyIncome('applicant', $state, $set,
                                 $get)),
-                        Forms\Components\TextInput::make('main_applicant.hours_per_week')
+                        Forms\Components\TextInput::make('hours_per_week')
                             ->numeric()
                             ->label('Horas/Semana')
                             ->live(onBlur: true)
                             ->disabled(fn(Forms\Get $get
-                            ): bool => $get('main_applicant.is_self_employed') ?? false)
+                            ): bool => $get('is_self_employed') ?? false)
                             ->afterStateUpdated(fn(
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
-                            ) => static::calculateYearlyIncome('main', $state, $set,
+                            ) => static::calculateYearlyIncome('applicant', $state, $set,
                                 $get)),
-                        Forms\Components\TextInput::make('main_applicant.income_per_extra_hour')
+                        Forms\Components\TextInput::make('income_per_extra_hour')
                             ->numeric()
                             ->label('Hora Extra $')
                             ->live(onBlur: true)
                             ->disabled(fn(Forms\Get $get
-                            ): bool => $get('main_applicant.is_self_employed') ?? false)
+                            ): bool => $get('is_self_employed') ?? false)
                             ->afterStateUpdated(fn(
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
-                            ) => static::calculateYearlyIncome('main', $state, $set,
+                            ) => static::calculateYearlyIncome('applicant', $state, $set,
                                 $get)),
-                        Forms\Components\TextInput::make('main_applicant.extra_hours_per_week')
+                        Forms\Components\TextInput::make('extra_hours_per_week')
                             ->numeric()
                             ->label('Extra/Semana')
                             ->live(onBlur: true)
                             ->disabled(fn(Forms\Get $get
-                            ): bool => $get('main_applicant.is_self_employed') ?? false)
+                            ): bool => $get('is_self_employed') ?? false)
                             ->afterStateUpdated(fn(
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
-                            ) => static::calculateYearlyIncome('main', $state, $set,
+                            ) => static::calculateYearlyIncome('applicant', $state, $set,
                                 $get)),
-                        Forms\Components\TextInput::make('main_applicant.weeks_per_year')
+                        Forms\Components\TextInput::make('weeks_per_year')
                             ->numeric()
                             ->label('Semanas por Año')
                             ->live(onBlur: true)
                             ->disabled(fn(Forms\Get $get
-                            ): bool => $get('main_applicant.is_self_employed') ?? false)
+                            ): bool => $get('is_self_employed') ?? false)
                             ->afterStateUpdated(fn(
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
-                            ) => static::calculateYearlyIncome('main', $state, $set,
+                            ) => static::calculateYearlyIncome('applicant', $state, $set,
                                 $get)),
-                        Forms\Components\TextInput::make('main_applicant.yearly_income')
+                        Forms\Components\TextInput::make('yearly_income')
                             ->numeric()
                             ->label('Ingreso Anual')
                             ->disabled(),
-                        Forms\Components\Toggle::make('main_applicant.is_self_employed')
+                        Forms\Components\Toggle::make('is_self_employed')
                             ->label('¿Self Employeed?')
                             ->inline(false)
                             ->live()
@@ -299,33 +286,33 @@ class EditPolicyIncome extends EditRecord
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
-                            ) => static::calculateYearlyIncome('main', $state, $set,
+                            ) => static::calculateYearlyIncome('applicant', $state, $set,
                                 $get))
                             ->afterStateUpdated(function (
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
                             ) {
-                                static::lockHourlyIncome('main', $state, $set, $get);
-                                static::calculateYearlyIncome('main', $state, $set,
+                                static::lockHourlyIncome('applicant', $state, $set, $get);
+                                static::calculateYearlyIncome('applicant', $state, $set,
                                     $get);
                             }),
-                        Forms\Components\TextInput::make('main_applicant.self_employed_profession')
+                        Forms\Components\TextInput::make('self_employed_profession')
                             ->label('Profesión')
                             ->disabled(fn(Forms\Get $get
-                            ): bool => !$get('main_applicant.is_self_employed')),
-                        Forms\Components\TextInput::make('main_applicant.self_employed_yearly_income')
+                            ): bool => !$get('is_self_employed')),
+                        Forms\Components\TextInput::make('self_employed_yearly_income')
                             ->numeric()
                             ->label('Ingreso Anual')
                             ->live(onBlur: true)
                             ->columnStart(6)
                             ->disabled(fn(Forms\Get $get
-                            ): bool => !$get('main_applicant.is_self_employed'))
+                            ): bool => !$get('is_self_employed'))
                             ->afterStateUpdated(fn(
                                 $state,
                                 Forms\Set $set,
                                 Forms\Get $get
-                            ) => static::calculateYearlyIncome('main', $state, $set,
+                            ) => static::calculateYearlyIncome('applicant', $state, $set,
                                 $get)),
                     ])->columns(6)->columnSpanFull()
                     ->collapseAllAction(fn (\Filament\Forms\Components\Actions\Action $action) => $action->hidden())

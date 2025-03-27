@@ -19,7 +19,7 @@ class ContactFactory extends Factory
      *
      * @var string
      */
-    protected $model = Contact::class;
+//    protected $model = Contact::class;
 
     /**
      * The Faker instance for this factory.
@@ -104,7 +104,7 @@ class ContactFactory extends Factory
             'annual_income_3' => $this->faker->optional(0.1)->randomFloat(2, 20000, 150000),
 
             // Immigration/Legal Documents
-            'immigration_status' => $this->faker->optional()->randomElement(ImmigrationStatus::cases())->value,
+            'immigration_status' => $this->faker->randomElement(ImmigrationStatus::class)->value,
             // 'immigration_status_category' => $this->faker->optional()->randomElement(ImmigrationStatusCategory::cases())->value,
             'passport_number' => $this->faker->optional()->regexify('[A-Z][0-9]{8}'),
             'uscis_number' => $this->faker->optional()->regexify('[0-9]{9}'),
@@ -121,7 +121,7 @@ class ContactFactory extends Factory
             'address_line_1' => $this->faker->optional()->streetAddress(),
             'address_line_2' => $this->faker->optional(0.3)->secondaryAddress(),
             'city' => $this->faker->optional()->city(),
-            'state_province' => $this->faker->optional()->randomElement(UsState::cases())->value,
+            'state_province' => $this->faker->randomElement(UsState::class)->value,
             'zip_code' => $this->faker->optional()->postcode(),
             'county' => $this->faker->optional()->city(),
 

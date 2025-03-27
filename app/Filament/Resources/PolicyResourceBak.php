@@ -59,23 +59,23 @@ class PolicyResourceBak extends Resource
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
 
     protected static ?string $recordTitleAttribute = 'policy_id';
-    public static function getGloballySearchableAttributes(): array
-    {
-        return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];
-    }
+//    public static function getGloballySearchableAttributes(): array
+//    {
+//        return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];
+//    }
 
-    public static function getGlobalSearchResultDetails(Model $record): array
-    {
-        return [
-            'Cliente' => $record->contact->full_name,
-            'Tipo' => $record->policyType->name ?? null,
-            'Año' => $record->policy_year,
-            // Return Pagado if $record->initial_paid is true
-            'Estatus' => ($record->initial_paid === true ? 'Pagado' : 'Sin Pagar') . ' / Documentos: ' . (DocumentStatus::from($record->document_status)->getLabel()),
-            'Cliente Notificado' => ($record->client_notified === true ? 'Sí' : 'No') . ($record->contact->state_province == 'KY' ? ' / ACA: ' . ($record->aca === true ? 'Sí' : 'No') : ''),
-
-        ];
-    }
+//    public static function getGlobalSearchResultDetails(Model $record): array
+//    {
+//        return [
+//            'Cliente' => $record->contact->full_name,
+//            'Tipo' => $record->policyType->name ?? null,
+//            'Año' => $record->policy_year,
+//            // Return Pagado if $record->initial_paid is true
+//            'Estatus' => ($record->initial_paid === true ? 'Pagado' : 'Sin Pagar') . ' / Documentos: ' . (DocumentStatus::from($record->document_status)->getLabel()),
+//            'Cliente Notificado' => ($record->client_notified === true ? 'Sí' : 'No') . ($record->contact->state_province == 'KY' ? ' / ACA: ' . ($record->aca === true ? 'Sí' : 'No') : ''),
+//
+//        ];
+//    }
 
     public static function getRecordSubNavigation(Page $page): array
     {
@@ -183,6 +183,7 @@ class PolicyResourceBak extends Resource
                                     ->inline(false)
                                     ->label('ACA')
                                     ->disabled(fn (?Policy $record): bool => $record && $record->contact->state_province != UsState::KENTUCKY->value),
+                                Forms\Components\Toggle::make('initial_verification')
                                 ])
                             ->columns([ 'md' => 8, 'lg' => 8 ])
                             ->columnSpanFull(),

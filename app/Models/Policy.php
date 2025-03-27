@@ -7,6 +7,8 @@ use App\Casts\ApplicantCollectionCast;
 use App\Enums\DocumentStatus;
 use App\Enums\PolicyStatus;
 use App\Enums\RenewalStatus;
+use App\Enums\UsState;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -30,6 +32,7 @@ class Policy extends Model
         'additional_applicants' => ApplicantCollectionCast::class,
         // 'family_members' => 'array',
         'prescription_drugs' => 'array',
+        'life_insurance' => 'json',
         'contact_information' => 'array',
         'premium_amount' => 'decimal:2',
         'coverage_amount' => 'decimal:2',
@@ -50,7 +53,9 @@ class Policy extends Model
         'renewed_at' => 'datetime',
         'renewal_status' => RenewalStatus::class,
         'status' => PolicyStatus::class,
-        'document_status'   => DocumentStatus::class
+        'document_status'   => DocumentStatus::class,
+        'policy_us_state' => UsState::class,
+        'requires_aca' => 'boolean',
     ];
 
     protected function casts(): array
@@ -110,6 +115,16 @@ class Policy extends Model
     public function policyType(): BelongsTo
     {
         return $this->belongsTo(PolicyType::class);
+    }
+
+    public function initialVerificationPerformedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'initial_verification_performed_by');
+    }
+
+    public function previousYearPolicyUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'previous_year_policy_user_id');
     }
 
     public function quote(): BelongsTo
@@ -177,8 +192,6 @@ class Policy extends Model
         return !empty($this->applicants) ? $this->applicants[0] : null;
     }
 
-
-
     public function additionalApplicants()
     {
         if (!isset($this->applicants) || !is_array($this->applicants)) {
@@ -189,4 +202,7 @@ class Policy extends Model
             return !isset($applicant['is_main']) || !$applicant['is_main'];
         });
     }
+
+
+
 }

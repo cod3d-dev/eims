@@ -23,6 +23,9 @@ return new class extends Migration
             $table->foreignId('agent_id')->nullable()->constrained()->nullOnDelete();
             $table->string('policy_number')->nullable();
             $table->string('policy_year')->nullable();
+            $table->boolean('has_existing_kynect_case')->default(false);
+            $table->string('policy_us_county')->nullable();
+            $table->string('policy_us_state')->nullable();
             $table->string('kynect_case_number')->nullable(); // Case number in Kynect
             $table->string('insurance_company_policy_number')->nullable(); // Policy number in insurance company system
             $table->string('policy_plan')->nullable();
@@ -39,6 +42,7 @@ return new class extends Migration
             $table->integer('preferred_payment_day')->nullable();
             $table->boolean('initial_paid')->default(false)->nullable();
             $table->boolean('autopay')->default(false)->nullable();
+            $table->boolean('requires_aca')->default(false);
             $table->boolean('aca')->default(false)->nullable();
             $table->string('document_status')->nullable();
             $table->text('observations')->nullable();
@@ -55,13 +59,18 @@ return new class extends Migration
             $table->string('preferred_doctor')->nullable();
             $table->text('prescription_drugs')->nullable();
             $table->json('contact_information')->nullable();
-
+            $table->json('life_insurance')->nullable();
+            
             // Policy Status and Dates
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->string('status')->nullable();
+            $table->foreignId('previous_year_policy_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->dateTime('status_changed_date')->nullable();
             $table->foreignId('status_changed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->boolean('is_initial_verification_complete')->default(false);
+            $table->dateTime('initial_verification_date')->nullable();
+            $table->foreignId('initial_verification_performed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('notes')->nullable();
 
             // Payment Information

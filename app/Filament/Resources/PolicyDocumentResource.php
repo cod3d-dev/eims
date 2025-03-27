@@ -4,9 +4,12 @@ namespace App\Filament\Resources;
 
 use App\Enums\DocumentStatus;
 use App\Enums\PolicyStatus;
+use App\Enums\UsState;
 use App\Filament\Resources\PolicyDocumentResource\Pages;
 use App\Filament\Resources\PolicyDocumentResource\RelationManagers;
+use App\Models\Policy;
 use App\Models\PolicyDocument;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -29,31 +32,60 @@ class PolicyDocumentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Select::make('policy_id')
-                    ->relationship('policy', 'id')
-                    ->required(),
-                Forms\Components\Select::make('document_type_id')
-                    ->relationship('documentType', 'name')
-                    ->required(),
-                Forms\Components\Select::make('user_id')
-                    ->relationship('user', 'name'),
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('status')
-                    ->options(DocumentStatus::class),
-                Forms\Components\TextInput::make('file_name')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('original_name')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('mime_type')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('size')
-                    ->numeric(),
-                Forms\Components\DatePicker::make('due_date'),
-                Forms\Components\DatePicker::make('sent_date'),
-                Forms\Components\Textarea::make('notes')
-                    ->columnSpanFull(),
+
+                    Forms\Components\Hidden::make('policy_id'),
+                    Forms\Components\Select::make('user_id')
+                        ->label('Agregado por')
+                        ->relationship('user', 'name')
+                        ->disabled(),
+                    Forms\Components\Select::make('document_type_id')
+                        ->relationship('documentType', 'name')
+                        ->label('Tipo de Documento')
+                        ->required(),
+                    Forms\Components\Select::make('status')
+                        ->label('Estatus')
+                        ->options(DocumentStatus::class),
+                    Forms\Components\DatePicker::make('due_date')
+                        ->label('Vence'),
+                    Forms\Components\TextInput::make('status_updated_by')
+                        ->label('Estatus actualizado por')
+                        ->disabled()
+                        ->formatStateUsing(function ($state) {
+                            if ($state) {
+                                $user = \App\Models\User::find($state);
+                                return $user ? $user->name : 'Unknown';
+                            }
+                            return '';
+                        }),
+                    Forms\Components\TextInput::make('status_updated_at')
+                        ->label('Fecha Actualización')
+                        ->disabled()
+                        ->formatStateUsing(function ($state) {
+                            if ($state) {
+                                return \Carbon\Carbon::parse($state)->format('d/m/Y');
+                            } else {
+                                return '';
+                            }
+                        }),
+                    Forms\Components\DatePicker::make('sent_date')
+                        ->label('Fecha Enviado')
+                        ->disabled()
+                        ->columnStart(4),
+                    Forms\Components\TextInput::make('name')
+                        ->label('Descripción')
+                        ->columnSpanFull()
+                        ->required()
+                        ->maxLength(255),
+                    Forms\Components\Textarea::make('notes')
+                        ->label('Notas')
+                        ->columnSpan(3),
+
+
+            ])->columns([
+                'sm' => 4,
+                'md => 4',
+                'lg => 4',
+                'xl => 4',
             ]);
     }
 
@@ -61,23 +93,54 @@ class PolicyDocumentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('policy.id')
-                    ->numeric()
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('policy.contact.full_name')
+                    ->label('Cliente')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('policy.contact', function (Builder $query) use ($search): Builder {
+                            return $query->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('middle_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%")
+                                ->orWhere('second_last_name', 'like', "%{$search}%");
+                        });
+                    })
+                    ->description(fn(PolicyDocument $record): string => $record->policy->policyType->name . ': ' . $record->policy->insuranceCompany->name ?? '' ),
                 Tables\Columns\TextColumn::make('documentType.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('user.name')
-                    ->numeric()
+                    ->label('Tipo')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Descripción')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+//                    ->options(DocumentStatus::class)
+                    ->action(
+                        Tables\Actions\Action::make('changeStatus')
+                            ->form([
+                                Forms\Components\Select::make('status')
+                                    ->options(DocumentStatus::class)
+                                    ->required()
+                            ])
+                            ->modalWidth('md')
+                            ->action(function (PolicyDocument $record, array $data): void {
+                                $record->update([
+                                    'status' => $data['status'],
+                                    'status_updated_by' => auth()->user()->id,
+                                    'status_updated_at' => now()
+                                ]);
+                                if ($data['status'] == DocumentStatus::Sent->value) {
+                                    $record->update([
+                                        'sent_date' => now()
+                                    ]);
+                                }
+                            })
+                    )
+                    ->label('Estatus')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('due_date')
+                    ->label('Vence')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sent_date')
+                    ->label('Enviado')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -114,7 +177,7 @@ class PolicyDocumentResource extends Resource
         return [
             'index' => Pages\ListPolicyDocuments::route('/'),
             'create' => Pages\CreatePolicyDocument::route('/create'),
-            'edit' => Pages\EditPolicyDocument::route('/{record}/edit'),
+//            'edit' => Pages\EditPolicyDocument::route('/{record}/edit'),
         ];
     }
 }

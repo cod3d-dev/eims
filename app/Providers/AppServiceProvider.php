@@ -5,6 +5,8 @@ namespace App\Providers;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
 use Illuminate\Support\ServiceProvider;
+use Filament\Support\Assets\Css;
+use Filament\Support\Facades\FilamentAsset;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +32,10 @@ class AppServiceProvider extends ServiceProvider
             'warning' => Color::Amber,
             'violet' => Color::Violet,
             'pending' => Color::Yellow,
+        ]);
+
+        FilamentAsset::register([
+            Css::make('custom-stylesheet2', __DIR__ . '/../../resources/css/custom.css'),
         ]);
     }
 }

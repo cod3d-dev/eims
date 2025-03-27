@@ -78,6 +78,9 @@ class EditPolicyContact extends EditRecord
                                     ->label('Correo Electronico')
                                     ->columnSpan(2),
                             ])->columns(4),
+                        Forms\Components\Toggle::make('has_existing_kynect_case')
+                            ->columnStart(4)
+                            ->label('Pedir Caso Kynect'),
 
                         Forms\Components\Fieldset::make('Direccion')
                             ->relationship('contact')
@@ -142,20 +145,15 @@ class EditPolicyContact extends EditRecord
                                         ->label('Vencimiento'),
                                 ])->columns(3),
 
-//                        Forms\Components\TextInput::make('country_of_residence')
-//                            ->label('Pais de Residencia'),
-//                        Forms\Components\TextInput::make('country_of_residence')
-//                            ->label('Pais de Residencia'),
-//                        Forms\Components\TextInput::make('state_of_residence')
-//                        Forms\Components\TextInput::make('country_of_birth')
-//                            ->label('Pais de Origen'),
-//                        Forms\Components\Select::make('immigration_status')
-//                            ->label('Estado de Migración')
-//                            ->options(ImmigrationStatus::class),
+
                     ])
                     ->columns(4),
             ]);
 
+    }
+
+    public function afterSave(): void {
+        dd($this->record);
     }
 
 }

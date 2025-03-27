@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Contact;
+use App\Models\Policy;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,5 +15,8 @@ class PolicySeeder extends Seeder
     public function run(): void
     {
         //
+        for ($i = 0; $i < 2000; $i++) {
+            Policy::factory(1)->create();
+        }
     }
 }

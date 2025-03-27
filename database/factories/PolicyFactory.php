@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\DocumentStatus;
 use App\Enums\PolicyStatus;
 use App\Enums\RenewalStatus;
+use App\Enums\UsState;
 use App\Models\Agent;
 use App\Models\Contact;
 use App\Models\InsuranceCompany;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Policy>
  */
 
- 
+
 class PolicyFactory extends Factory
 {
     /**
@@ -40,7 +41,7 @@ class PolicyFactory extends Factory
         $this->faker = \Faker\Factory::create('es_VE');
     }
 
-    
+
     public function definition(): array
     {
         $contact = Contact::inRandomOrder()->first() ?? Contact::factory()->create();
@@ -49,27 +50,27 @@ class PolicyFactory extends Factory
         $insuranceCompany = InsuranceCompany::inRandomOrder()->first();
         $agent = Agent::inRandomOrder()->first();
         $quote = Quote::inRandomOrder()->first();
-        
+
         // Generate 0-3 additional applicants
         $additionalApplicantsCount = $this->faker->numberBetween(0, 3);
         $totalFamilyMembers = $additionalApplicantsCount + 1; // Main applicant + additional applicants
-        
+
         // Create main applicant based on contact data
         $mainApplicant = $this->createMainApplicantFromContact($contact);
-        
+
         // Create additional applicants
         $additionalApplicants = $this->createAdditionalApplicants($additionalApplicantsCount);
-        
+
         // Generate random dates
         $effectiveDate = $this->faker->dateTimeBetween('-1 month', '+1 month');
         $expirationDate = (clone $effectiveDate)->modify('+1 year');
-        
+
         // Generate contact information
         $contactInformation = $this->generateContactInformation($contact);
-        
+
         // Generate prescription drugs
         $prescriptionDrugs = $this->generatePrescriptionDrugs();
-        
+
         return [
             // Basic Information
             'contact_id' => $contact->id,
@@ -80,53 +81,54 @@ class PolicyFactory extends Factory
             'agent_id' => $agent->id,
             'policy_number' => $this->faker->regexify('[A-Z]{2}[0-9]{6}'),
             'policy_year' => now()->format('Y'),
+            'policy_us_state' => $this->faker->randomElement(UsState::class),
             'kynect_case_number' => $this->faker->optional()->regexify('[0-9]{8}'),
             'insurance_company_policy_number' => $this->faker->optional()->regexify('[A-Z]{3}[0-9]{7}'),
             'policy_plan' => $this->faker->randomElement(['Bronze', 'Silver', 'Gold', 'Platinum']),
             'policy_level' => $this->faker->randomElement(['Basic', 'Standard', 'Premium']),
-            
+
             // Financial Information
             'policy_total_cost' => $totalCost = $this->faker->randomFloat(2, 5000, 20000),
             'policy_total_subsidy' => $subsidy = $this->faker->optional(0.7)->randomFloat(2, 1000, $totalCost * 0.8),
             'premium_amount' => $subsidy ? $totalCost - $subsidy : $totalCost,
             'coverage_amount' => $this->faker->randomFloat(2, 100000, 1000000),
             'recurring_payment' => $this->faker->boolean(80),
-            
+
             // Dates
             'effective_date' => $effectiveDate,
             'expiration_date' => $expirationDate,
             'first_payment_date' => $this->faker->dateTimeBetween('-30 days', '+30 days'),
             'last_payment_date' => $this->faker->optional(0.5)->dateTimeBetween('-30 days', 'now'),
             'preferred_payment_day' => $this->faker->numberBetween(1, 28),
-            
+
             // Payment Status
             'initial_paid' => $this->faker->boolean(70),
             'autopay' => $this->faker->boolean(60),
             'aca' => $this->faker->boolean(50),
-            'document_status' => $this->faker->randomElement(DocumentStatus::cases()),
+            'document_status' => $this->faker->randomElement(DocumentStatus::class),
             'observations' => $this->faker->optional(0.7)->paragraph(),
             'client_notified' => $this->faker->boolean(80),
-            
+
             // Family Information
             'main_applicant' => $mainApplicant,
             'additional_applicants' => $additionalApplicants,
             'total_family_members' => $totalFamilyMembers,
             'total_applicants' => $totalFamilyMembers,
-            
+
             // Additional Information
             'estimated_household_income' => $this->faker->randomFloat(2, 30000, 150000),
             'preferred_doctor' => $this->faker->optional(0.5)->name(),
             'prescription_drugs' => $prescriptionDrugs,
             'contact_information' => $contactInformation,
-            
+
             // Policy Status and Dates
             'start_date' => $effectiveDate,
             'end_date' => $expirationDate,
-            'status' => $this->faker->randomElement(PolicyStatus::cases()),
+            'status' => $this->faker->randomElement(PolicyStatus::class),
             'status_changed_date' => $this->faker->dateTimeBetween('-30 days', 'now'),
             'status_changed_by' => $user->id,
             'notes' => $this->faker->optional(0.7)->paragraph(),
-            
+
             // Payment Information (encrypted fields)
             'payment_card_type' => $this->faker->optional(0.6)->randomElement(['visa', 'mastercard', 'amex', 'discover']),
             'payment_card_bank' => $this->faker->optional(0.6)->company(),
@@ -135,20 +137,20 @@ class PolicyFactory extends Factory
             'payment_card_exp_month' => $this->faker->optional(0.6)->numberBetween(1, 12),
             'payment_card_exp_year' => $this->faker->optional(0.6)->numberBetween(now()->format('Y'), now()->addYears(5)->format('Y')),
             'payment_card_cvv' => $this->faker->optional(0.6)->numberBetween(100, 999),
-            
+
             // Bank Account Information (encrypted fields)
             'payment_bank_account_bank' => $this->faker->optional(0.4)->company(),
             'payment_bank_account_holder' => $this->faker->optional(0.4)->name(),
             'payment_bank_account_aba' => $this->faker->optional(0.4)->regexify('[0-9]{9}'),
             'payment_bank_account_number' => $this->faker->optional(0.4)->regexify('[0-9]{10,12}'),
-            
+
             // Billing Address (encrypted fields)
             'billing_address_1' => $this->faker->optional(0.7)->streetAddress(),
             'billing_address_2' => $this->faker->optional(0.3)->secondaryAddress(),
             'billing_address_city' => $this->faker->optional(0.7)->city(),
             'billing_address_state' => $this->faker->optional(0.7)->state(),
             'billing_address_zip' => $this->faker->optional(0.7)->postcode(),
-            
+
             // Renewal fields
             'is_renewal' => $isRenewal = $this->faker->boolean(20),
             'renewed_from_policy_id' => $isRenewal ? null : null, // Would need to set this manually
@@ -157,13 +159,13 @@ class PolicyFactory extends Factory
             'renewed_at' => $isRenewal ? $this->faker->dateTimeBetween('-30 days', 'now') : null,
             'renewal_status' => $isRenewal ? $this->faker->randomElement(RenewalStatus::cases()) : null,
             'renewal_notes' => $isRenewal ? $this->faker->optional(0.7)->paragraph() : null,
-            
+
             // Audit Information
             'created_by' => $user->id,
             'updated_by' => $user->id,
         ];
     }
-    
+
     /**
      * Create a main applicant from contact data
      */
@@ -228,22 +230,22 @@ class PolicyFactory extends Factory
             'age' => Carbon::parse($contact->date_of_birth)->age ?? $this->faker->numberBetween(18, 80),
         ];
     }
-    
+
     /**
      * Create an array of additional applicants
      */
     private function createAdditionalApplicants(int $count): array
     {
         $applicants = [];
-        
+
         $relationships = ['spouse', 'child', 'parent', 'sibling'];
-        
+
         for ($i = 0; $i < $count; $i++) {
             $gender = $this->faker->randomElement(['male', 'female']);
             $firstName = $gender === 'male' ? $this->faker->firstNameMale() : $this->faker->firstNameFemale();
             $lastName = $this->faker->lastName();
             $relationship = $this->faker->randomElement($relationships);
-            
+
             // Adjust age based on relationship
             $age = match($relationship) {
                 'spouse' => $this->faker->numberBetween(18, 80),
@@ -252,9 +254,9 @@ class PolicyFactory extends Factory
                 'sibling' => $this->faker->numberBetween(18, 70),
                 default => $this->faker->numberBetween(18, 80),
             };
-            
+
             $dob = Carbon::now()->subYears($age)->subDays($this->faker->numberBetween(0, 365))->format('Y-m-d');
-            
+
             $applicants[] = [
                 'gender' => $gender,
                 'date_of_birth' => $dob,
@@ -293,10 +295,10 @@ class PolicyFactory extends Factory
                 'age' => $age,
             ];
         }
-        
+
         return $applicants;
     }
-    
+
     /**
      * Generate contact information array
      */
@@ -328,7 +330,7 @@ class PolicyFactory extends Factory
             'preferred_contact_time' => $contact->preferred_contact_time,
         ];
     }
-    
+
     /**
      * Generate prescription drugs array
      */
@@ -336,25 +338,25 @@ class PolicyFactory extends Factory
     {
         $drugs = [];
         $count = $this->faker->numberBetween($min, $max);
-        
+
         if ($count <= 0) {
             return $drugs;
         }
-        
+
         $commonDrugs = [
-            'Lisinopril', 'Atorvastatin', 'Levothyroxine', 'Metformin', 
-            'Amlodipine', 'Metoprolol', 'Omeprazole', 'Simvastatin', 
+            'Lisinopril', 'Atorvastatin', 'Levothyroxine', 'Metformin',
+            'Amlodipine', 'Metoprolol', 'Omeprazole', 'Simvastatin',
             'Losartan', 'Albuterol', 'Gabapentin', 'Hydrochlorothiazide',
             'Sertraline', 'Acetaminophen', 'Ibuprofen', 'Aspirin',
             'Amoxicillin', 'Azithromycin', 'Fluoxetine', 'Prednisone'
         ];
-        
+
         $drugIndices = array_rand($commonDrugs, min($count, count($commonDrugs)));
-        
+
         if (!is_array($drugIndices)) {
             $drugIndices = [$drugIndices];
         }
-        
+
         foreach ($drugIndices as $index) {
             $drugs[] = [
                 'name' => $commonDrugs[$index],
@@ -362,34 +364,34 @@ class PolicyFactory extends Factory
                 'frequency' => $this->faker->randomElement(['daily', 'twice daily', 'as needed', 'weekly']),
             ];
         }
-        
+
         return $drugs;
     }
-    
+
     /**
      * Calculate total income from all sources
      */
     private function calculateTotalIncome(Contact $contact): float
     {
         $total = 0;
-        
+
         if ($contact->annual_income_1) {
             $total += $contact->annual_income_1;
         }
-        
+
         if ($contact->annual_income_2) {
             $total += $contact->annual_income_2;
         }
-        
+
         if ($contact->annual_income_3) {
             $total += $contact->annual_income_3;
         }
-        
+
         // If no income is set, generate a random one
         if ($total === 0) {
             $total = $this->faker->randomFloat(2, 20000, 120000);
         }
-        
+
         return $total;
     }
 }

@@ -8,6 +8,8 @@ use App\Enums\MaritialStatus;
 use App\Filament\Resources\PolicyResource\Pages;
 use App\Filament\Resources\PolicyResource\RelationManagers;
 use Faker\Provider\Text;
+use Filament\Forms\Components\Actions;
+use Filament\Actions\EditAction;
 use Filament\Pages\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
 use App\Models\Policy;
@@ -18,6 +20,7 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\Alignment;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Pagination\Paginator;
@@ -58,7 +61,7 @@ class PolicyResource extends Resource
     protected static ?string $pluralModelLabel = 'Polizas';
 
 
-    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
+    protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected static ?string $recordTitleAttribute = 'policy_id';
     public static function getGloballySearchableAttributes(): array
@@ -88,6 +91,7 @@ class PolicyResource extends Resource
             Pages\EditPolicyApplicants::class,
             Pages\EditPolicyIncome::class,
             Pages\EditPolicyPayments::class,
+            Pages\EditPolicyLife::class,
             Pages\ManagePolicyDocument::class,
             Pages\ManagePolicyIssues::class
 
@@ -152,18 +156,32 @@ class PolicyResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('policy_plan')
                                     ->label('Plan'),
-                                Forms\Components\TextInput::make('kynect_case_number')
-                                    ->label('Caso Kynect'),
                                 Forms\Components\TextInput::make('policy_total_cost')
                                     ->label('Costo Poliza'),
                                 Forms\Components\TextInput::make('policy_total_subsidy')
                                     ->label('Subsidio'),
                                 Forms\Components\TextInput::make('premium_amount')
                                     ->label('Prima'),
-                                ])->columns(5)->columnSpanFull(),
+                                Forms\Components\TextInput::make('policy_us_county')
+                                    ->label('Condado'),
+                                Forms\Components\Select::make('policy_us_state')
+                                    ->label('Estado')
+                                    ->live()
+                                    ->options(UsState::class),
+                                Forms\Components\TextInput::make('kynect_case_number')
+                                    ->label('Caso Kynect'),
+                                Forms\Components\Toggle::make('has_existing_kynect_case')
+                                    ->inline(false)
+                                    ->label('Pedir Caso Kynect'),
+                                ])->columns(4)->columnSpanFull(),
 
                         Forms\Components\Fieldset::make()
                             ->schema([
+                                Forms\Components\Select::make('previous_year_policy_user_id')
+                                    ->relationship('previousYearPolicyUser', 'name')
+                                    ->label('Asistente Año Anterior')
+                                    ->columnStart(7)
+                                    ->columnSpan(2),
                                 Forms\Components\Select::make('status')
                                     ->label('Estatus')
                                     ->columnSpan(2)
@@ -171,6 +189,8 @@ class PolicyResource extends Resource
                                 Forms\Components\Select::make('document_status')
                                     ->columnSpan(2)
                                     ->label('Documentos')
+                                    ->disabled()
+                                    ->default(DocumentStatus::ToAdd)
                                     ->options(DocumentStatus::class),
                                 Forms\Components\Toggle::make('client_notified')
                                     ->inline(false)
@@ -184,7 +204,49 @@ class PolicyResource extends Resource
                                 Forms\Components\Toggle::make('aca')
                                     ->inline(false)
                                     ->label('ACA')
-                                    ->disabled(fn (?Policy $record): bool => $record && $record->contact->state_province != UsState::KENTUCKY->value),
+                                    ->disabled(fn (Forms\Get $get): bool => $get ('policy_us_state') != UsState::KENTUCKY->value),
+                                Forms\Components\Toggle::make('is_initial_verification_complete')
+                                    ->inline(false)
+                                    ->live()
+                                    ->columnSpan(2)
+                                    ->label('Verificacion Inicial'),
+                                Forms\Components\Select::make('initial_verification_performed_by')
+                                    ->relationship('initialVerificationPerformedBy', 'name')
+                                    ->label('Verificado Por')
+                                    ->disabled(fn (Get $get) => $get('is_initial_verification_complete') != true)
+                                    ->columnSpan(3),
+                                Forms\Components\DatePicker::make('initial_verification_date')
+                                    ->label('Fecha Verificacion')
+                                    ->disabled(fn (Get $get) => $get('is_initial_verification_complete') != true)
+                                    ->columnSpan(3),
+                                Forms\Components\Textarea::make('notes')
+                                    ->label('Observaciones')
+                                    ->rows(6)
+                                    ->columnSpanFull(),
+                                Forms\Components\Actions::make([
+                                    Forms\Components\Actions\Action::make('add_note')
+                                        ->label('Agregar Nota')
+                                        ->color('info')
+                                        ->modalHeading('Agregar Nota')
+                                        ->visible(fn (?Policy $record) => $record && $record->exists)
+                                        ->form([
+                                            Forms\Components\Textarea::make('note')
+                                                ->required()
+                                                ->rows(3)
+                                                ->label('Nota'),
+                                        ])
+                                        ->modalSubmitActionLabel('Agregar')
+                                        ->action(function (Policy $record, array $data, Set $set): void {
+                                            $note = Carbon::now()->toDateTimeString() . ' - ' . auth()->user()->name . ":\n" . $data['note'] . "\n\n" ;
+                                            $record->notes = $record->notes . $note;
+                                            $record->save();
+
+                                            // Refresh the notes field with the updated value
+                                            $set('notes', $record->notes);
+                                        }),
+                                    ])
+                                    ->alignEnd()
+                                    ->columnSpanFull(),
                                 ])
                             ->columns([ 'md' => 8, 'lg' => 8 ])
                             ->columnSpanFull(),
@@ -214,7 +276,6 @@ class PolicyResource extends Resource
 
                 Tables\Columns\TextColumn::make('contact.full_name')
                     ->label('Cliente')
-                    ->tooltip(fn(Policy $record): string => $record->observations ?? 'None\nTest')
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('contact', function (Builder $query) use ($search): Builder {
                             return $query->where('first_name', 'like', "%{$search}%")
@@ -230,7 +291,20 @@ class PolicyResource extends Resource
                             ->orderBy('contacts.first_name', $direction)
                             ->select('policies.*');
                     })
-                    ->description(fn(Policy $record): string => $record->contact->email_address ?? ''),
+                    ->html()
+                    ->formatStateUsing(function(string $state, Policy $record): string { 
+                        $customers = $state;
+
+                        foreach ($record->additional_applicants as $applicant) {
+                            $customers .= '<br><span class="text-gray-500 text-xs">' . $applicant->first_name . ' ' . $applicant->middle_name . ' ' . $applicant->last_name . ' ' . $applicant->second_last_name . '</span>';
+                        }
+
+                        return $customers;
+                    }),
+                Tables\Columns\TextColumn::make('policyType.name')
+                    ->badge()
+                    ->label('Tipo')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('insuranceCompany.name')
                     ->label('Aseguradora')
                     ->searchable(query: function (Builder $query, string $search): Builder {
@@ -260,18 +334,35 @@ class PolicyResource extends Resource
                     })
                     ->toggleable(),
                 Tables\Columns\ColumnGroup::make('Estatus', [
-                    Tables\Columns\BooleanColumn::make('client_notified')
+                    Tables\Columns\IconColumn::make('client_notified')
+                        ->boolean()
                         ->label('Informado')
                         ->sortable(),
-                    Tables\Columns\BooleanColumn::make('autopay')
+                    Tables\Columns\IconColumn::make('autopay')
+                        ->boolean()
                         ->label('Autopay')
                         ->sortable(),
-                    Tables\Columns\BooleanColumn::make('initial_paid')
+                    Tables\Columns\IconColumn::make('initial_paid')
+                        ->boolean()
                         ->label('Inicial')
                         ->sortable(),
-                    Tables\Columns\BooleanColumn::make('aca')
-                        ->label('ACA')
-                        ->sortable(),
+                    Tables\Columns\IconColumn::make('aca')
+//                        ->boolean()
+//                        ->formatStateUsing(fn(Policy $record): bool => ($record->policy_us_state === 'KY' && $record->aca) ? true : false)
+//                        ->sortable(),
+                        ->label('ACA'),
+//                        ->icon(function (Policy $record): string {
+////                            dd($record->policy_us_state);
+//                            if($record->policy_us_state->value === 'KY' && $record->insuranceCompany->name != 'CareSource' && $record->insuranceCompany->name != 'Anthem') {
+//                                if ($record->aca) {
+//                                    return 'heroicon-o-check-circle';
+//                                } else {
+//                                    return 'heroicon-o-x-circle';
+//                                }
+//                            } else {
+//                                return 'heroicon-o-minus';
+//                            }
+//                        }),
                     Tables\Columns\TextColumn::make('document_status')
                         ->label('Documentos')
                         ->sortable()
@@ -383,6 +474,56 @@ class PolicyResource extends Resource
                     //     ->icon('heroicon-o-pencil-square')
                     //     ->url(fn (Policy $record): string => route('filament.app.resources.policies.quickedit', $record)),
                     Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\ReplicateAction::make()
+                        ->label('Duplicar')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->form([
+                            Forms\Components\Select::make('policy_type_id')
+                                ->label('Tipo de Poliza')
+                                ->relationship('policyType', 'name')
+                                ->required()
+                                ->preload()
+                                ->searchable(),
+                            Forms\Components\DatePicker::make('start_date')
+                                ->label('Fecha de inicio')
+                                ->required()
+                                ->default(now()),
+                            Forms\Components\DatePicker::make('end_date')
+                                ->label('Fecha de fin')
+                                ->required()
+                                ->default(now()->addYear()->subDay()),
+                            Forms\Components\Textarea::make('notes')
+                                ->label('Notas')
+                                ->rows(3),
+                        ])
+                        ->modalHeading('Duplicar Póliza')
+                        ->modalDescription('Se creará una nueva póliza con los datos de la póliza actual. Por favor, seleccione el tipo de póliza y especifique las nuevas fechas.')
+                        ->modalSubmitActionLabel('Duplicar')
+                        ->mutateRecordDataUsing(function (array $data): array {
+                            // Remove specific fields that should not be duplicated
+                            unset($data['policy_id']);
+                            unset($data['number']);
+                            unset($data['renewed_from_policy_id']);
+                            unset($data['renewed_to_policy_id']);
+                            unset($data['renewed_by']);
+                            unset($data['renewed_at']);
+                            
+                            return $data;
+                        })
+                        ->beforeReplicaSaved(function (Policy $replica, array $data): void {
+                            // Update with form data
+                            $replica->policy_type_id = $data['policy_type_id'];
+                            $replica->start_date = $data['start_date'];
+                            $replica->end_date = $data['end_date'];
+                            $replica->notes = ($replica->notes ? $replica->notes . "\n\n" : '') . 
+                                "=== Notas de Duplicación ===\n" . ($data['notes'] ?? 'Póliza duplicada el ' . now()->format('Y-m-d H:i:s'));
+                        })
+                        ->afterReplicaSaved(function (Policy $replica): void {
+                            Notification::make()
+                                ->title('Póliza duplicada exitosamente')
+                                ->success()
+                                ->send();
+                        }),
                 ]),
                 Tables\Actions\Action::make('renew')
                     ->label('Renovar')
@@ -453,7 +594,7 @@ class PolicyResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\IssuesRelationManager::class,
+//            RelationManagers\IssuesRelationManager::class,
 //            RelationManagers\DocumentsRelationManager::class,
         ];
     }
@@ -522,6 +663,7 @@ class PolicyResource extends Resource
             'edit-contact' => Pages\EditPolicyContact::route('/{record}/edit/contact'),
             'edit-applicants' => Pages\EditPolicyApplicants::route('/{record}/edit/applicants'),
             'edit-income' => Pages\EditPolicyIncome::route('/{record}/edit/income'),
+            'edit-life' => Pages\EditPolicyLife::route('/{record}/edit/life'),
             'documents' => Pages\ManagePolicyDocument::route('/{record}/documents'),
             'issues' => Pages\ManagePolicyIssues::route('/{record}/issues'),
             'payments' => Pages\EditPolicyPayments::route('/{record}/payments'),

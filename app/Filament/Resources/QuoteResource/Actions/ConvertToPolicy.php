@@ -9,6 +9,7 @@ use App\Models\Policy;
 use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 use App\Filament\Resources\PolicyResource;
+use App\Enums\DocumentStatus;
 
 class ConvertToPolicy extends Action
 {
@@ -40,6 +41,7 @@ class ConvertToPolicy extends Action
                     'prescription_drugs' => $record->prescription_drugs,
                     'contact_information' => $record->contact_information,
                     'status' => PolicyStatus::Draft,
+                    'document_status' => DocumentStatus::ToAdd,
                 ]);
 
                 // Update the quote status to Converted and add policy reference

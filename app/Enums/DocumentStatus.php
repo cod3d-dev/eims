@@ -9,6 +9,7 @@ use Filament\Support\Contracts\HasColor;
 enum DocumentStatus: string implements HasLabel, HasColor
 {
 
+    case ToAdd = 'to_add';
     case Pending = 'pending';
     case Sent = 'sent';
     case Approved = 'approved';
@@ -18,6 +19,7 @@ enum DocumentStatus: string implements HasLabel, HasColor
     public function getLabel(): string
     {
         return match ($this) {
+            self::ToAdd => 'Por Agregar',
             self::Pending => 'Pendiente',
             self::Sent => 'Enviado',
             self::Approved => 'Aprobado',

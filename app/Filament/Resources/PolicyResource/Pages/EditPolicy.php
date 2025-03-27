@@ -15,10 +15,13 @@ class EditPolicy extends EditRecord
     protected static ?string $navigationLabel = 'Poliza';
     protected static ?string $navigationIcon = 'iconoir-privacy-policy';
 
+    public static string|\Filament\Support\Enums\Alignment $formActionsAlignment = 'end';
+
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\ViewAction::make(),
         ];
     }
 
@@ -45,6 +48,9 @@ class EditPolicy extends EditRecord
 //        dd($data);
         $data['main_applicant']['fullname'] = $data['contact_information']['first_name'] . ' ' . $data['contact_information']['middle_name'] . $data['contact_information']['last_name'] . $data['contact_information']['second_last_name'];
 
+        if ($data['policy_us_state'] === 'KY' ) {
+            $data['requires_aca'] = true;
+        }
         return $data;
     }
 

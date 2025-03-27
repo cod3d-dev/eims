@@ -86,4 +86,13 @@ class KynectFPL extends Model
         $amount = self::getThreshold($householdSize, $year);
         return $amount ?? 0;
     }
+
+    /**
+     * Get the latest year available in the KynectFPL table
+     */
+    public static function getLatestYear(): int
+    {
+        $latestRecord = self::orderBy('year', 'desc')->first();
+        return $latestRecord ? $latestRecord->year : date('Y');
+    }
 }

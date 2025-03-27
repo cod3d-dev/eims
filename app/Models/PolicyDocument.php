@@ -34,4 +34,9 @@ class PolicyDocument extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function lastUpdatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

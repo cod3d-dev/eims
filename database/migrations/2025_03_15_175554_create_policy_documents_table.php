@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('name');
             $table->string('status')->nullable();
+            $table->dateTime('status_updated_at')->nullable();
+            $table->foreignId('status_updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('file_name')->nullable();
             $table->string('original_name')->nullable();
             $table->string('mime_type')->nullable();

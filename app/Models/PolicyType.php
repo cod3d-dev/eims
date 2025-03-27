@@ -9,4 +9,6 @@ class PolicyType extends Model
 {
     /** @use HasFactory<\Database\Factories\PolicyTypeFactory> */
     use HasFactory;
+
+    protected $guarded = [];
 }
