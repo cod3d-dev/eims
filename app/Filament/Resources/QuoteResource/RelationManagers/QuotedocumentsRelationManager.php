@@ -15,7 +15,7 @@ class QuoteDocumentsRelationManager extends RelationManager
 {
     protected static string $relationship = 'quoteDocuments';
     protected static ?string $title = 'Documentos';
-    protected static ?string $recordTitleAttribute = 'original_name';
+    // protected static ?string $recordTitleAttribute = 'original_name';
 
     public function isReadOnly(): bool
     {

@@ -58,7 +58,7 @@ class PolicyResourceBak extends Resource
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
 
-    protected static ?string $recordTitleAttribute = 'policy_id';
+    // protected static ?string $recordTitleAttribute = 'policy_id';
 //    public static function getGloballySearchableAttributes(): array
 //    {
 //        return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];

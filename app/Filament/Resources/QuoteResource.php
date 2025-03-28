@@ -51,21 +51,21 @@ class QuoteResource extends Resource
 //        return true;
 //    }
 
-public static function getGloballySearchableAttributes(): array
-    {
-        return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];
-    }
+// public static function getGloballySearchableAttributes(): array
+//     {
+//         return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];
+//     }
 
-    public static function getGlobalSearchResultDetails(Model $record): array
-    {
-        return [
-            'Cliente' => $record->contact->full_name,
-            'Tipo' => $record->policyType->name ?? null,
-            'Año' => $record->year,
-            // Return Pagado if $record->initial_paid is true
-            'Estatus' => $record->status->getLabel(),
-        ];
-    }
+    // public static function getGlobalSearchResultDetails(Model $record): array
+    // {
+    //     return [
+    //         'Cliente' => $record->contact->full_name,
+    //         'Tipo' => $record->policyType->name ?? null,
+    //         'Año' => $record->year,
+    //         // Return Pagado if $record->initial_paid is true
+    //         'Estatus' => $record->status->getLabel(),
+    //     ];
+    // }
 
 
     public static function form(Form $form): Form

@@ -33,6 +33,7 @@ enum DocumentStatus: string implements HasLabel, HasColor
     public function getColor(): string
     {
         return match ($this) {
+            self::ToAdd => 'warning',
             self::Pending => 'pending',
             self::Sent => 'info',
             self::Approved => 'success',

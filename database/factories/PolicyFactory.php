@@ -4,12 +4,12 @@ namespace Database\Factories;
 
 use App\Enums\DocumentStatus;
 use App\Enums\PolicyStatus;
+use App\Enums\PolicyType;
 use App\Enums\RenewalStatus;
 use App\Enums\UsState;
 use App\Models\Agent;
 use App\Models\Contact;
 use App\Models\InsuranceCompany;
-use App\Models\PolicyType;
 use App\Models\Quote;
 use App\Models\User;
 use App\ValueObjects\Applicant;
@@ -46,7 +46,6 @@ class PolicyFactory extends Factory
     {
         $contact = Contact::inRandomOrder()->first() ?? Contact::factory()->create();
         $user = User::inRandomOrder()->first();
-        $policyType = PolicyType::inRandomOrder()->first();
         $insuranceCompany = InsuranceCompany::inRandomOrder()->first();
         $agent = Agent::inRandomOrder()->first();
         $quote = Quote::inRandomOrder()->first();
@@ -76,7 +75,7 @@ class PolicyFactory extends Factory
             'contact_id' => $contact->id,
             'user_id' => $user->id,
             'insurance_company_id' => $insuranceCompany->id,
-            'policy_type_id' => $policyType->id,
+            'policy_type' => $this->faker->randomElement(PolicyType::class),
             'quote_id' => $quote?->id,
             'agent_id' => $agent->id,
             'policy_number' => $this->faker->regexify('[A-Z]{2}[0-9]{6}'),

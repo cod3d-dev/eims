@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\Gender;
 use App\Enums\ImmigrationStatus;
 use App\Enums\MaritialStatus;
+use App\Enums\PolicyType;
 use App\Filament\Resources\PolicyResource\Pages;
 use App\Filament\Resources\PolicyResource\RelationManagers;
 use Faker\Provider\Text;
@@ -15,6 +16,7 @@ use Filament\Resources\Pages\Page;
 use App\Models\Policy;
 use App\Models\Quote;
 use App\Models\Contact;
+use Illuminate\Contracts\Support\Htmlable;
 //use App\Filament\Resources\PolicyResource\RelationManagers\IssuesRelationManager;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -63,8 +65,16 @@ class PolicyResource extends Resource
 
     protected static SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
-    protected static ?string $recordTitleAttribute = 'policy_id';
-    public static function getGloballySearchableAttributes(): array
+    protected static ?string $recordTitleAttribute = 'contact.first_name';
+
+    protected static int $globalSearchResultsLimit = 20;
+
+    public static function getGlobalSearchResultTitle(Model $record): string | Htmlable
+    {
+        return $record->contact->full_name;
+    }
+
+    public static function getGloballySearchableAttributes(): array 
     {
         return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];
     }
@@ -72,8 +82,7 @@ class PolicyResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
-            'Cliente' => $record->contact->full_name,
-            'Tipo' => $record->policyType->name ?? null,
+            'Tipo' => $record->policy_type->getLabel() ?? null,
             'Año' => $record->policy_year,
             // Return Pagado if $record->initial_paid is true
             'Estatus' => (string) (($record->initial_paid === true ? 'Pagado' : 'Sin Pagar') . ' / Documentos: ' . ($record->document_status->getLabel())),
@@ -132,8 +141,8 @@ class PolicyResource extends Resource
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
                             ->label('Asistente'),
-                        Forms\Components\Select::make('policy_type_id')
-                            ->relationship('policyType', 'name')
+                        Forms\Components\Select::make('policy_type')
+                            ->options(PolicyType::class)
                             ->label('Tipo de Poliza'),
 
                         Forms\Components\Select::make('insurance_company_id')
@@ -277,11 +286,19 @@ class PolicyResource extends Resource
                 Tables\Columns\TextColumn::make('contact.full_name')
                     ->label('Cliente')
                     ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->whereHas('contact', function (Builder $query) use ($search): Builder {
-                            return $query->where('first_name', 'like', "%{$search}%")
-                                ->orWhere('middle_name', 'like', "%{$search}%")
-                                ->orWhere('last_name', 'like', "%{$search}%")
-                                ->orWhere('second_last_name', 'like', "%{$search}%");
+                        return $query->where(function (Builder $query) use ($search): Builder {
+                            // Search in contact fields
+                            $query->whereHas('contact', function (Builder $query) use ($search): Builder {
+                                return $query->where('first_name', 'like', "%{$search}%")
+                                    ->orWhere('middle_name', 'like', "%{$search}%")
+                                    ->orWhere('last_name', 'like', "%{$search}%")
+                                    ->orWhere('second_last_name', 'like', "%{$search}%");
+                            });
+                            
+                            // Search in additional applicants JSON field
+                            $query->orWhereRaw("JSON_SEARCH(LOWER(additional_applicants), 'one', LOWER(?)) IS NOT NULL", ["%{$search}%"]);
+                            
+                            return $query;
                         });
                     })
                     ->sortable(query: function (Builder $query, string $direction): Builder {
@@ -301,12 +318,15 @@ class PolicyResource extends Resource
 
                         return $customers;
                     }),
-                Tables\Columns\TextColumn::make('policyType.name')
+                Tables\Columns\TextColumn::make('policy_type')
                     ->badge()
                     ->label('Tipo')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('insuranceCompany.name')
-                    ->label('Aseguradora')
+                Tables\Columns\TextColumn::make('insuranceCompany.code')
+                    ->label('Empresa')
+                    ->sortable()
+                    ->badge()
+                    ->tooltip(fn(Policy $record): string => $record->insuranceCompany->name)
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('insuranceCompany', function (Builder $query) use ($search): Builder {
                             return $query->where('name', 'like', "%{$search}%");
@@ -405,64 +425,33 @@ class PolicyResource extends Resource
                 //     }),
             ])
             ->filters([
-//                Tables\Filters\SelectFilter::make('insurance_account.name')
-//                    ->label('Cuenta')
-//                    ->relationship('insuranceAccount', 'name'),
-//                Tables\Filters\SelectFilter::make('effective_year')
-//                    ->label('Año Efectivo')
-//                    ->options([
-//                        (date('Y') - 1) => (date('Y') - 1),
-//                        date('Y') => date('Y'),
-//                        (date('Y') + 1) => (date('Y') + 1),
-//                    ])
-//                    ->query(function (Builder $query, array $data): Builder {
-//                        return $query->when($data['value'], function (Builder $query, string $year): Builder {
-//                            return $query->whereYear('effective_date', $year);
-//                        });
-//                    }),
-//                Tables\Filters\SelectFilter::make('status')
-//                    ->label('Estado')
-//                    ->options(PolicyStatus::class),
-//                Tables\Filters\SelectFilter::make('document_status')
-//                    ->label('Documentos')
-//                    ->options(DocumentStatus::class)
-//                    ->query(function ($query, array $data) {
-//                        if (!empty($data['value'])) {
-//                            return $query->whereHas('documents', function ($query) use ($data) {
-//                                $query->where('status', $data['value']);
-//                            });
-//                        }
-//                    }),
-//                Tables\Filters\SelectFilter::make('insurance_company_id')
-//                    ->relationship('insuranceCompany', 'name')
-//                    ->label('Compañía de Seguro')
-//                    ->searchable()
-//                    ->preload(),
-//                Tables\Filters\SelectFilter::make('policy_type_id')
-//                    ->relationship('policyType', 'name')
-//                    ->label('Tipo de Poliza')
-//                    ->searchable()
-//                    ->preload(),
-                Tables\Filters\Filter::make('family_member')
-                    ->form([
-                        Forms\Components\TextInput::make('family_member_search')
-                            ->label('Buscar Miembro Familiar')
-                            ->placeholder('Nombre, Apellido, SSN, etc.')
-                    ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when(
-                                $data['family_member_search'],
-                                fn(Builder $query, $search): Builder => $query
-                                    ->where(function ($query) use ($search) {
-                                        $query->whereJsonContains('family_members', ['first_name' => $search])
-                                            ->orWhereJsonContains('family_members', ['last_name' => $search])
-                                            ->orWhereJsonContains('family_members', ['member_ssn' => $search])
-                                            ->orWhereRaw("JSON_SEARCH(LOWER(family_members), 'one', LOWER(?)) IS NOT NULL",
-                                                ["%{$search}%"]);
-                                    })
-                            );
-                    })
+               Tables\Filters\SelectFilter::make('agent.name')
+                   ->label('Agente')
+                   ->relationship('agent', 'name'),
+               Tables\Filters\SelectFilter::make('policy_year')
+                   ->label('Año Efectivo')
+                   ->options([
+                    (date('Y') - 2) => (date('Y') - 2),
+                    (date('Y') - 1) => (date('Y') - 1),
+                    date('Y') => date('Y'),
+                    (date('Y') + 1) => (date('Y') + 1),
+                    (date('Y') + 2) => (date('Y') + 2),
+                   ]),
+               Tables\Filters\SelectFilter::make('status')
+                   ->label('Estatus')
+                   ->options(PolicyStatus::class),
+               Tables\Filters\SelectFilter::make('document_status')
+                   ->label('Documentos')
+                   ->multiple()
+                   ->options(DocumentStatus::class),
+               Tables\Filters\SelectFilter::make('insurance_company_id')
+                   ->relationship('insuranceCompany', 'name')
+                   ->label('Compañía de Seguro')
+                   ->searchable()
+                   ->preload(),
+               Tables\Filters\SelectFilter::make('policy_type')
+                   ->options(PolicyType::class)
+                   ->label('Tipo de Poliza'),
             ], layout: FiltersLayout::AboveContentCollapsible)
             ->actions([
                 // Create a Action group with 3 actions
@@ -478,9 +467,9 @@ class PolicyResource extends Resource
                         ->label('Duplicar')
                         ->icon('heroicon-o-document-duplicate')
                         ->form([
-                            Forms\Components\Select::make('policy_type_id')
+                            Forms\Components\Select::make('policy_type')
                                 ->label('Tipo de Poliza')
-                                ->relationship('policyType', 'name')
+                                ->options(PolicyType::class)
                                 ->required()
                                 ->preload()
                                 ->searchable(),
@@ -512,7 +501,7 @@ class PolicyResource extends Resource
                         })
                         ->beforeReplicaSaved(function (Policy $replica, array $data): void {
                             // Update with form data
-                            $replica->policy_type_id = $data['policy_type_id'];
+                            $replica->policy_type = $data['policy_type'];
                             $replica->start_date = $data['start_date'];
                             $replica->end_date = $data['end_date'];
                             $replica->notes = ($replica->notes ? $replica->notes . "\n\n" : '') . 

@@ -36,6 +36,17 @@ class PolicyTypeResource extends Resource
                     ->maxLength(255),
                 Forms\Components\TextInput::make('description')
                     ->maxLength(255),
+                Forms\Components\Select::make('color')
+                    ->options([
+                        'success' => 'success',
+                        'primary' => 'primary',
+                        'danger' => 'danger',
+                        'warning' => 'warning',
+                        'info' => 'info',
+                        'secondary' => 'secondary',
+                        'light' => 'light',
+                        'dark' => 'dark',
+                    ]),
                 Forms\Components\Toggle::make('is_active')
                     ->required(),
             ]);

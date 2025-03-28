@@ -28,13 +28,20 @@ class ContactResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Contactos';
 
-    protected static ?string $recordTitleAttribute = 'full_name';
+    protected static ?string $recordTitleAttribute = 'first_name' . ' ' . 'last_name';
 
     protected static ?int $navigationSort = 2;
+
+    protected static int $globalSearchResultsLimit = 5;
 
     public static function getGloballySearchableAttributes(): array
     {
         return ['first_name', 'middle_name', 'last_name', 'second_last_name'];
+    }
+
+    public static function getGlobalSearchResultTitle(Model $record): string | Htmlable
+    {
+        return $record->full_name;
     }
 
     public static function form(Form $form): Form

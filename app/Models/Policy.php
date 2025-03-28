@@ -6,6 +6,7 @@ use App\Casts\ApplicantCast;
 use App\Casts\ApplicantCollectionCast;
 use App\Enums\DocumentStatus;
 use App\Enums\PolicyStatus;
+use App\Enums\PolicyType;
 use App\Enums\RenewalStatus;
 use App\Enums\UsState;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -56,6 +57,7 @@ class Policy extends Model
         'document_status'   => DocumentStatus::class,
         'policy_us_state' => UsState::class,
         'requires_aca' => 'boolean',
+        'policy_type' => PolicyType::class,
     ];
 
     protected function casts(): array
@@ -112,10 +114,6 @@ class Policy extends Model
         return $this->belongsTo(InsuranceCompany::class);
     }
 
-    public function policyType(): BelongsTo
-    {
-        return $this->belongsTo(PolicyType::class);
-    }
 
     public function initialVerificationPerformedBy(): BelongsTo
     {

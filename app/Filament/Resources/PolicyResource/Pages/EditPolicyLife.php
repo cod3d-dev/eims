@@ -10,6 +10,7 @@ use Filament\Resources\Pages\EditRecord;
 use Filament\Forms\Form;
 use Filament\Forms;
 use App\Models\Policy;
+use App\Enums\PolicyType;
 
 class EditPolicyLife extends EditRecord
 {
@@ -25,7 +26,7 @@ class EditPolicyLife extends EditRecord
             ->schema([
 
                 Forms\Components\Section::make()
-                    ->visible(fn (Policy $record) => $record->policyType->name == "Vida")
+                    ->visible(fn (Policy $record) => $record->policy_type == PolicyType::Life)
                     ->schema([
 
                         Forms\Components\Fieldset::make()
@@ -648,9 +649,9 @@ class EditPolicyLife extends EditRecord
                     ->columnSpanFull()
                     ->columns(4),
                 Forms\Components\Section::make()
-                    ->visible(fn (Policy $record) => $record->policyType->name != "Vida")
+                    ->visible(fn (Policy $record) => $record->policy_type != PolicyType::Life)
                     ->schema([
-                        Forms\Components\Placeholder::make('No es una poliza de vida!')
+                        Forms\Components\Placeholder::make('¡No es una poliza de vida!')
                             ->columnSpanFull()
                             ->dehydrated(true)
                             ->disabled()

@@ -15,43 +15,58 @@ class InsuranceCompanySeeder extends Seeder
     {
         $companies = [
             [
-                'name' => 'Humana',
-                'contact_name' => 'Humana Representative',
-                'contact_email' => 'contact@humana.com',
-                'contact_phone' => '555-0001',
-                'portal_url' => 'https://www.humana.com',
+                'name' => 'Molina',
+                'code' => 'MOL',
                 'is_active' => true,
             ],
             [
-                'name' => 'Triple-S',
-                'contact_name' => 'Triple-S Representative',
-                'contact_email' => 'contact@ssspr.com',
-                'contact_phone' => '555-0002',
-                'portal_url' => 'https://www.ssspr.com',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'MCS',
-                'contact_name' => 'MCS Representative',
-                'contact_email' => 'contact@mcs.com.pr',
-                'contact_phone' => '555-0003',
-                'portal_url' => 'https://www.mcs.com.pr',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'First Medical',
-                'contact_name' => 'First Medical Representative',
-                'contact_email' => 'contact@firstmedical.com',
-                'contact_phone' => '555-0004',
-                'portal_url' => 'https://www.firstmedical.com',
-                'is_active' => true,
-            ],
-            [
-                'name' => 'Ambetter',
+                'name' => 'Ambetter Health',
+                'code' => 'AMB',
                 'is_active' => true,
             ],
             [
                 'name' => 'CareSource',
+                'code' => 'CAR',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Oscar',
+                'code' => 'OSC',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Anthem',
+                'code' => 'ANT',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Cigna Healthcare',
+                'code' => 'CIG',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'UnitedHealthcare',
+                'code' => 'UHC',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Blue Cross Blue Shield',
+                'code' => 'BSC',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Sentara',
+                'code' => 'SEN',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Aetna',
+                'code' => 'AET',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Kaiser Permanente',
+                'code' => 'KAI',
                 'is_active' => true,
             ],
         ];
