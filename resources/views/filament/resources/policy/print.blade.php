@@ -871,7 +871,14 @@
                                     @if(isset($record->life_insurance['beneficiaries'][$i]))
                                     <tr>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['beneficiaries'][$i]['name'] ?? 'N/A' }}</td>
-                                        <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ FamilyRelationship::tryFrom($record->life_insurance['beneficiaries'][$i]['relationship'])->getLabel() ?? 'N/A' }}</td>
+                                        <td style="padding: 0.5rem; border: 1px solid #ddd;">
+                                            @php
+                                                $relationship = isset($record->life_insurance['beneficiaries'][$i]['relationship']) 
+                                                    ? FamilyRelationship::tryFrom($record->life_insurance['beneficiaries'][$i]['relationship']) 
+                                                    : null;
+                                            @endphp
+                                            {{ $relationship ? $relationship->getLabel() : 'N/A' }}
+                                        </td>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['beneficiaries'][$i]['date_of_birth'] ?? 'N/A' }}</td>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['beneficiaries'][$i]['percentage'] ?? '0' }}%</td>
                                     </tr>
@@ -899,7 +906,7 @@
                                     @if(isset($record->life_insurance['contingents'][$i]))
                                     <tr>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['contingents'][$i]['name'] ?? 'N/A' }}</td>
-                                        <td style="padding: 0.5rem; border: w1px solid #ddd;">
+                                        <td style="padding: 0.5rem; border: 1px solid #ddd;">
                                             @php
                                                 $relation = FamilyRelationship::tryFrom($record->life_insurance['contingents'][$i]['relationship']);
                                             @endphp
