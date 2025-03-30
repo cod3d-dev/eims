@@ -172,7 +172,7 @@ class QuoteResource extends Resource
                                                         $set('contact_information.second_last_name',
                                                             $contact->second_last_name);
                                                         $set('contact_information.date_of_birth',
-                                                            $contact->date_of_birth?->format('Y-m-d'));
+                                                            $contact->date_of_birth);
                                                         $set('contact_information.gender', $contact->gender);
                                                         $set('contact_information.phone', $contact->phone);
                                                         $set('contact_information.email_address',
