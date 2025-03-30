@@ -468,11 +468,15 @@ class PolicyResource extends Resource
                Tables\Filters\SelectFilter::make('policy_type')
                    ->options(PolicyType::class)
                    ->label('Tipo de Poliza'),
-            ], layout: FiltersLayout::AboveContentCollapsible)
+            ], layout: FiltersLayout::AboveContent)
             ->actions([
                 // Create a Action group with 3 actions
                 ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('view')
+                        ->label('Ver')
+                        ->icon('heroicon-o-eye')
+                        ->url(fn (Policy $record): string => PolicyResource::getUrl('view-compact', ['record' => $record])),
+                        // ->url(fn (Policy $record): string => route(PolicyResource::getUrl('view-compact', [ 'record' => $record]))),
                     Tables\Actions\EditAction::make(),
                     // Tables\Actions\Action::make('quickedit')
                     //     ->label('Edición Rápida')
@@ -495,7 +499,6 @@ class PolicyResource extends Resource
                                 ->default(now()),
                             Forms\Components\DatePicker::make('end_date')
                                 ->label('Fecha de fin')
-                                ->required()
                                 ->default(now()->addYear()->subDay()),
                             Forms\Components\Textarea::make('notes')
                                 ->label('Notas')

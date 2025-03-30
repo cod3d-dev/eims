@@ -16,7 +16,6 @@ class Contact extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'date_of_birth' => 'date',
         'gender' => Gender::class,
         'marital_status' => MaritialStatus::class,
         'is_lead' => 'boolean',

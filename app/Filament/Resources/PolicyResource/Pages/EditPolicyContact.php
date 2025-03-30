@@ -21,7 +21,7 @@ class EditPolicyContact extends EditRecord
 
     protected static ?string $navigationIcon = 'eos-perm-contact-calendar-o';
 
-    public  function form(Form $form): Form
+    public function form(Form $form): Form
     {
         return $form
             ->schema([
@@ -44,21 +44,7 @@ class EditPolicyContact extends EditRecord
                                     ->label('Segundo Apellido'),
                                 Forms\Components\DatePicker::make('date_of_birth')
                                     ->label('Fecha de Nacimiento')
-                                    ->live(onBlur: true)
-                                    ->afterStateHydrated(function ($state, Forms\Set $set) {
-                                        if ($state) {
-                                            $birthDate = \Carbon\Carbon::parse($state);
-                                            $age = $birthDate->age;
-                                            $set('age', $age);
-                                        }
-                                    })
-                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                        if ($state) {
-                                            $birthDate = \Carbon\Carbon::parse($state);
-                                            $age = $birthDate->age;
-                                            $set('age', $age);
-                                        }
-                                    }),
+                                    ->live(onBlur: true),
                                 Forms\Components\TextInput::make('age')
                                     ->label('Edad')
                                     ->disabled()
@@ -152,8 +138,19 @@ class EditPolicyContact extends EditRecord
 
     }
 
-    public function afterSave(): void {
-        dd($this->record);
-    }
+    // public function afterSave(): void {
+    //     // dd($this->record);
+    // }
+    
+    // protected function mutateFormDataBeforeSave(array $data): array
+    // {
+    //     dd($data);
+    //     $newNote = $data('new_note') ?? null;
+    //     if(isset($newNote)) {
+    //         $data['notes'] = $data['notes'] . "\n" . auth()->user()->name . ': ' . now()->toDateTimeString() . "\n" . $newNote . "\n";
+    //     }
+    //     unset($data['new_note']);
+    //     return $data;
+    // }
 
 }

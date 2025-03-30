@@ -110,38 +110,38 @@ class EditPolicyApplicants extends EditRecord
 
                                 Forms\Components\Fieldset::make('Información Migratoria')
                                     ->schema([
-                                        Forms\Components\Select::make('contact_information.immigration_status')
+                                        Forms\Components\Select::make('member_inmigration_status')
                                             ->label('Estatus migratorio')
                                             ->options(ImmigrationStatus::class)
                                             ->live(),
-                                        Forms\Components\TextInput::make('contact_information.immigration_status_category')
+                                        Forms\Components\TextInput::make('member_inmigration_status_category')
                                             ->label('Descripción')
                                             ->columnSpan(2)
-                                            ->disabled(fn (Get $get) => $get('contact_information.immigration_status') != ImmigrationStatus::Other->value)
+                                            ->disabled(fn (Get $get) => $get('member_inmigration_status') != ImmigrationStatus::Other->value)
                                             ->columnSpan(2),
-                                        Forms\Components\TextInput::make('contact_information.ssn')
+                                        Forms\Components\TextInput::make('member_ssn')
                                             ->label('SSN #'),
-                                        Forms\Components\TextInput::make('contact_information.passport')
+                                        Forms\Components\TextInput::make('member_passport')
                                             ->label('Pasaporte'),
-                                        Forms\Components\TextInput::make('contact_information.alien_number')
+                                        Forms\Components\TextInput::make('member_alien_number')
                                             ->label('Alien'),
-                                        Forms\Components\TextInput::make('contact_information.work_permit_number')
+                                        Forms\Components\TextInput::make('member_work_permit_number')
                                             ->label('Permiso de Trabajo #'),
-                                        Forms\Components\DatePicker::make('contact_information.work_permit_emission_date')
+                                        Forms\Components\DatePicker::make('member_work_permit_emission_date')
                                             ->label('Emisión'),
-                                        Forms\Components\DatePicker::make('contact_information.work_permit_expiration_date')
+                                        Forms\Components\DatePicker::make('member_work_permit_expiration_date')
                                             ->label('Vencimiento'),
-                                        Forms\Components\TextInput::make('contact_information.green_card_number')
+                                        Forms\Components\TextInput::make('member_green_card_number')
                                             ->label('Green Card #'),
-                                        Forms\Components\DatePicker::make('contact_information.green_card_emission_date')
+                                        Forms\Components\DatePicker::make('member_green_card_emission_date')
                                             ->label('Emisión'),
-                                        Forms\Components\DatePicker::make('contact_information.green_card_expiration_date')
+                                        Forms\Components\DatePicker::make('member_green_card_expiration_date')
                                             ->label('Vencimiento'),
-                                        Forms\Components\TextInput::make('contact_information.driver_license_number')
-                                            ->label('Green Card #'),
-                                        Forms\Components\DatePicker::make('contact_information.driver_license_emission_date')
+                                        Forms\Components\TextInput::make('member_driver_license_number')
+                                            ->label('Licencia de conducir #'),
+                                        Forms\Components\DatePicker::make('member_driver_license_emission_date')
                                             ->label('Emisión'),
-                                        Forms\Components\DatePicker::make('contact_information.driver_license_expiration_date')
+                                        Forms\Components\DatePicker::make('member_driver_license_expiration_date')
                                             ->label('Vencimiento'),
                                     ])->columns(3),
 

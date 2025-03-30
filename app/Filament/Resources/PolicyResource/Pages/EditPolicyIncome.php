@@ -153,7 +153,7 @@ class EditPolicyIncome extends EditRecord
                                 Forms\Components\TextInput::make('main_applicant.yearly_income')
                                     ->numeric()
                                     ->label('Ingreso Anual')
-                                    ->disabled(),
+                                    ->readOnly(),
                                 Forms\Components\Toggle::make('main_applicant.is_self_employed')
                                     ->label('¿Self Employeed?')
                                     ->inline(false)
@@ -276,7 +276,7 @@ class EditPolicyIncome extends EditRecord
                         Forms\Components\TextInput::make('yearly_income')
                             ->numeric()
                             ->label('Ingreso Anual')
-                            ->disabled(),
+                            ->readOnly(),
                         Forms\Components\Toggle::make('is_self_employed')
                             ->label('¿Self Employeed?')
                             ->inline(false)
