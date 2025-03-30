@@ -13,5 +13,8 @@ class QuoteSeeder extends Seeder
     public function run(): void
     {
         //
+        for ($i = 0; $i < 300; $i++) {
+            Quote::factory(1)->create();
+        }
     }
 }
