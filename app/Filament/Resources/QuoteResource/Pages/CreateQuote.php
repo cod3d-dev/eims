@@ -15,11 +15,8 @@ class CreateQuote extends CreateRecord
         \Log::info('Form data before create mutation:', $data);
 
 
-        // Handle contact creation/update
-
-        dd($data['contact_information']);
         if ($data['create_new_client'] ?? false) {
-            // Create a new contact with the provided information
+            // Create a new contact with the provided information and attach it to the quote
             $contact = \App\Models\Contact::create([
                 'first_name' => $data['contact_information']['first_name'],
                 'middle_name' => $data['contact_information']['middle_name'],

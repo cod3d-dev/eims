@@ -893,7 +893,7 @@
                                     @if(isset($record->life_insurance['contingents'][$i]))
                                     <tr>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['contingents'][$i]['name'] ?? 'N/A' }}</td>
-                                        <td style="padding: 0.5rem; border: 1px solid #ddd;">
+                                        <td style="padding: 0.5rem; border: w1px solid #ddd;">
                                             @php
                                                 $relation = FamilyRelationship::tryFrom($record->life_insurance['contingents'][$i]['relationship']);
                                             @endphp
