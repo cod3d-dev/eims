@@ -107,7 +107,7 @@
                     <x-slot name="heading">
                         Aplicante Principal
                     </x-slot>
-                    
+
                     {{-- Personal Information Section --}}
                     <div style="margin-bottom: 1.5rem;">
                         <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #6B7280;">Información Personal</h3>
@@ -670,7 +670,7 @@
                     <x-slot name="heading">
                         Información del Seguro de Vida
                     </x-slot>
-                    
+
                     <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
                         <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #6B7280;">Información Física</h3>
                         <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;">
@@ -743,8 +743,8 @@
                                 <p class="mt-1">{{ $record->life_insurance['applicant']['diagnosis'] ?? 'N/A' }}</p>
                             </div>
                         </div>
-                        
-                        
+
+
                         @if(isset($record->life_insurance['applicant']['has_been_hospitalized']) && $record->life_insurance['applicant']['has_been_hospitalized'])
                         <div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem;">
                             <div>
@@ -795,7 +795,7 @@
                                 <p class="mt-1">{{ isset($record->life_insurance['mother']['is_alive']) && $record->life_insurance['mother']['is_alive'] ? $record->life_insurance['mother']['death_reason'] ?? 'N/A' : '' }}</p>
                             </div>
                         </div>
-                        
+
                         @if(isset($record->life_insurance['family']['member_final_disease']) && $record->life_insurance['family']['member_final_disease'])
                         <div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem;">
                             <div>
@@ -893,7 +893,12 @@
                                     @if(isset($record->life_insurance['contingents'][$i]))
                                     <tr>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['contingents'][$i]['name'] ?? 'N/A' }}</td>
-                                        <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ FamilyRelationship::tryFrom($record->life_insurance['contingents'][$i]['relationship'])->getLabel() ?? 'N/A' }}</td>
+                                        <td style="padding: 0.5rem; border: 1px solid #ddd;">
+                                            @php
+                                                $relation = FamilyRelationship::tryFrom($record->life_insurance['contingents'][$i]['relationship']);
+                                            @endphp
+                                            {{ $relation ? $relation->getLabel() : 'N/A' }}
+                                        </td>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['contingents'][$i]['date_of_birth'] ?? 'N/A' }}</td>
                                         <td style="padding: 0.5rem; border: 1px solid #ddd;">{{ $record->life_insurance['contingents'][$i]['percentage'] ?? '0' }}%</td>
                                     </tr>
