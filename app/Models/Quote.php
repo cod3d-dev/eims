@@ -6,6 +6,7 @@ use App\Casts\ApplicantCast;
 use App\Casts\ApplicantCollectionCast;
 use App\Enums\DocumentStatus;
 use App\Enums\QuoteStatus;
+use App\Enums\PolicyType;
 use App\ValueObjects\ApplicantCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,6 +35,7 @@ class Quote extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'valid_until' => 'date',
+        'policy_type' => PolicyType::class,
     ];
 
     public function contact(): BelongsTo
@@ -51,10 +53,6 @@ class Quote extends Model
         return $this->belongsTo(InsuranceCompany::class);
     }
 
-    public function policyType(): BelongsTo
-    {
-        return $this->belongsTo(PolicyType::class);
-    }
 
     public function agent(): BelongsTo
     {

@@ -99,7 +99,7 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.applicant.primary_doctor')
                                     ->label('Doctor principal'),
                                 Forms\Components\TextInput::make('life_insurance.applicant.primary_doctor_phone')
-                                    ->label('Teléfono del doctor principal'),
+                                    ->label('Teléfono doctor'),
                                 Forms\Components\TextInput::make('life_insurance.applicant.primary_doctor_address')
                                     ->label('Dirección del doctor principal')
                                     ->columnSpan(4),
@@ -132,6 +132,51 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\DatePicker::make('life_insurance.applicant.hospitalized_date')
                                     ->label('Fecha hospitalización')
                                     ->disabled(fn($get) => !$get('life_insurance.applicant.has_been_hospitalized')),
+
+                                Forms\Components\Grid::make()
+                                    ->schema([
+                                        Forms\Components\Toggle::make('life_insurance.father.is_alive')
+                                            ->label('¿Padre falleció?')
+                                            ->live()
+                                            ->inline(false),
+                                        Forms\Components\TextInput::make('life_insurance.father.age')
+                                            ->label('Edad')
+                                            ->numeric(),
+                                        Forms\Components\TextInput::make('life_insurance.father.death_reason')
+                                            ->label('Motivo de fallecimiento')
+                                            ->disabled(fn($get) => !$get('life_insurance.father.is_alive'))
+                                            ->columnSpan(4),
+                                        Forms\Components\Toggle::make('life_insurance.mother.is_alive')
+                                            ->label('¿Madre falleció?')
+                                            ->live()
+                                            ->inline(false),
+                                        Forms\Components\TextInput::make('life_insurance.mother.age')
+                                            ->label('Edad')
+                                            ->numeric(),
+                                        Forms\Components\TextInput::make('life_insurance.mother.death_reason')
+                                            ->label('Motivo de fallecimiento')
+                                            ->disabled(fn($get) => !$get('life_insurance.mother.is_alive'))
+                                            ->columnSpan(4),
+                                        Forms\Components\Toggle::make('life_insurance.family.member_final_disease')
+                                            ->label('Familiar con enfermedad')
+                                            ->live()
+                                            ->columnSpan(2)
+                                            ->inline(false),
+                                        Forms\Components\Textinput::make('life_insurance.family.member_final_disease_relationship')
+                                            ->label('Parentesco')
+                                            ->disabled(fn($get) => !$get('life_insurance.family.member_final_disease'))
+                                            ->columnSpan(4),
+                                        Forms\Components\TextInput::make('life_insurance.family.member_final_disease_description')
+                                            ->label('Descripción de la enfermedad')
+                                            ->disabled(fn($get) => !$get('life_insurance.family.member_final_disease'))
+                                            ->columnSpan(6),
+
+                                    ])->columns(12),
+
+
+
+
+
                             ])->columns(6),
 
 
@@ -159,23 +204,76 @@ class EditPolicyLife extends EditRecord
                                     ->numeric(),
 
                                 Forms\Components\TextInput::make('life_insurance.total_beneficiaries')
-                                    ->label('Número de Beneficiarios')
-                                    ->live()
+                                    ->label('Número Beneficiarios')
+                                    ->live(onBlur: true)
                                     ->default(1)
                                     ->maxValue(6)
                                     ->numeric()
-                                    ->required(),
+                                    ->required()
+                                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                                        $numberBeneficiaries = $state;
+
+                                        $percentageAssigned = (float) $get('life_insurance.beneficiaries.total_percentage');
+                                        $countOfPercentageZero = 0;
+                                        for ($i = 1; $i <= $numberBeneficiaries; $i++) {
+                                            $currentPercentage = (float) $get('life_insurance.beneficiaries.'.$i.'.percentage');
+                                            if ($currentPercentage == 0) {
+                                                $countOfPercentageZero++;
+                                            }
+                                        }
+
+                                        if ($countOfPercentageZero > 0) {
+                                            if ((100 - $percentageAssigned) > 0) {
+                                                for ($i = 1; $i <= $numberBeneficiaries; $i++) {
+                                                    $currentPercentage = (float) $get('life_insurance.beneficiaries.'.$i.'.percentage');
+                                                    if ($currentPercentage == 0) {
+                                                        $set('life_insurance.beneficiaries.'.$i.'.percentage',
+                                                            number_format((100 - $percentageAssigned) / $countOfPercentageZero, 2));
+                                                        $set('life_insurance.beneficiaries.total_percentage', 100);
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            $set('life_insurance.beneficiaries.total_percentage', number_format($percentageAssigned, 2));
+                                        }
+                                    }),
 
                                 Forms\Components\TextInput::make('life_insurance.total_contingents')
-                                    ->label('Número de Contingentes')
-                                    ->live()
-                                    ->default(1)
+                                    ->label('Número Contingentes')
+                                    ->live(onBlur: true)
+                                    ->default(0)
                                     ->numeric()
-                                    ->required(),
+                                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
+                                        $numberContingents = $state;
+
+                                        $percentageAssigned = (float) $get('life_insurance.contingents.total_percentage');
+                                        $countOfPercentageZero = 0;
+                                        for ($i = 1; $i <= $numberContingents; $i++) {
+                                            $currentPercentage = (float) $get('life_insurance.contingents.'.$i.'.percentage');
+                                            if ($currentPercentage == 0) {
+                                                $countOfPercentageZero++;
+                                            }
+                                        }
+
+                                        if ($countOfPercentageZero > 0) {
+                                            if ((100 - $percentageAssigned) > 0) {
+                                                for ($i = 1; $i <= $numberContingents; $i++) {
+                                                    $currentPercentage = (float) $get('life_insurance.contingents.'.$i.'.percentage');
+                                                    if ($currentPercentage == 0) {
+                                                        $set('life_insurance.contingents.'.$i.'.percentage',
+                                                            number_format((100 - $percentageAssigned) / $countOfPercentageZero, 2));
+                                                        $set('life_insurance.contingents.total_percentage', 100);
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            $set('life_insurance.contingents.total_percentage', number_format($percentageAssigned, 2));
+                                        }
+                                    }),
 
                             ])
                             ->columns(3)
-                            ->columnSpan(2)
+                            ->columnSpan(3)
                             ->columnStart(2),
 
 
@@ -184,10 +282,10 @@ class EditPolicyLife extends EditRecord
                                 // Beneficiario 1
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.1.name')
                                     ->label('Nombre del Beneficiario 1')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.beneficiaries.1.date_of_birth')
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.beneficiaries.1.relationship')
                                     ->label('Parentesco')
                                     ->columnSpan(2)
@@ -202,10 +300,11 @@ class EditPolicyLife extends EditRecord
                                     ->columnSpan(2)
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.1.percentage')
-                                    ->label('%')
+                                    ->prefix('%')
                                     ->required()
-                                    ->minValue(0.01)
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -216,11 +315,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.2.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 2)
                                     ->label('Nombre del Beneficiario 2')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.beneficiaries.2.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 2)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.beneficiaries.2.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 2)
                                     ->label('Parentesco')
@@ -240,9 +339,11 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.2.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 2)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -253,11 +354,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.3.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 3)
                                     ->label('Nombre del Beneficiario 3')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.beneficiaries.3.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 3)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.beneficiaries.3.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 3)
                                     ->label('Parentesco')
@@ -276,10 +377,13 @@ class EditPolicyLife extends EditRecord
                                     ->columnSpan(2)
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.3.percentage')
+                                    ->label('Asignación')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 3)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -290,11 +394,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.4.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 4)
                                     ->label('Nombre del Beneficiario 4')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.beneficiaries.4.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 4)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.beneficiaries.4.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 4)
                                     ->label('Parentesco')
@@ -314,9 +418,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.4.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 4)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -327,11 +434,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.5.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 5)
                                     ->label('Nombre del Beneficiario 5')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.beneficiaries.5.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 5)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.beneficiaries.5.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 5)
                                     ->label('Parentesco')
@@ -351,9 +458,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.5.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 5)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -364,11 +474,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.6.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 6)
                                     ->label('Nombre del Beneficiario 6')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.beneficiaries.6.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 6)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.beneficiaries.6.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 6)
                                     ->label('Parentesco')
@@ -388,9 +498,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.beneficiaries.6.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_beneficiaries') < 6)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -416,10 +529,10 @@ class EditPolicyLife extends EditRecord
                                 // Contingente 1
                                 Forms\Components\TextInput::make('life_insurance.contingents.1.name')
                                     ->label('Nombre del Contingente 1')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.contingents.1.date_of_birth')
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.contingents.1.relationship')
                                     ->label('Parentesco')
                                     ->columnSpan(2)
@@ -434,10 +547,12 @@ class EditPolicyLife extends EditRecord
                                     ->columnSpan(2)
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.contingents.1.percentage')
-                                    ->label('%')
+                                    ->label('Asignación')
+                                    ->prefix('%')
                                     ->required()
-                                    ->minValue(0.01)
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -448,11 +563,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.contingents.2.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 2)
                                     ->label('Nombre del Contingente 2')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.contingents.2.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 2)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.contingents.2.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 2)
                                     ->label('Parentesco')
@@ -472,9 +587,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.contingents.2.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 2)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -485,11 +603,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.contingents.3.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 3)
                                     ->label('Nombre del Contingente 3')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.contingents.3.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 3)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.contingents.3.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 3)
                                     ->label('Parentesco')
@@ -509,9 +627,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.contingents.3.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 3)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -522,11 +643,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.contingents.4.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 4)
                                     ->label('Nombre del Contingente 4')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.contingents.4.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 4)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.contingents.4.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 4)
                                     ->label('Parentesco')
@@ -546,9 +667,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.contingents.4.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 4)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -559,11 +683,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.contingents.5.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 5)
                                     ->label('Nombre del Contingente 5')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.contingents.5.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 5)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.contingents.5.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 5)
                                     ->label('Parentesco')
@@ -583,9 +707,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.contingents.5.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 5)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -596,11 +723,11 @@ class EditPolicyLife extends EditRecord
                                 Forms\Components\TextInput::make('life_insurance.contingents.6.name')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 6)
                                     ->label('Nombre del Contingente 6')
-                                    ->columnSpan(4),
+                                    ->columnSpan(3),
                                 Forms\Components\DatePicker::make('life_insurance.contingents.6.date_of_birth')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 6)
                                     ->columnSpan(2)
-                                    ->label('Fecha de Nacimiento'),
+                                    ->label('Fecha Nacimiento'),
                                 Forms\Components\Select::make('life_insurance.contingents.6.relationship')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 6)
                                     ->label('Parentesco')
@@ -620,9 +747,12 @@ class EditPolicyLife extends EditRecord
                                     ->label('Correo'),
                                 Forms\Components\TextInput::make('life_insurance.contingents.6.percentage')
                                     ->hidden(fn(Forms\Get $get): bool => $get('life_insurance.total_contingents') < 6)
-                                    ->label('%')
-                                    ->minValue(0.01)
+                                    ->label('Asignación')
+                                    ->prefix('%')
+                                    ->required()
+                                    ->numeric()
                                     ->live(onBlur: true)
+                                    ->columnSpan(2)
                                     ->afterStateUpdated(fn(
                                         $state,
                                         Forms\Set $set,
@@ -643,7 +773,7 @@ class EditPolicyLife extends EditRecord
 
 
                             ])
-                            ->columns(4)
+                            ->columns(15)
                             ->columnSpanFull(),
                     ])
                     ->columnSpanFull()
@@ -666,12 +796,11 @@ class EditPolicyLife extends EditRecord
     {
 
         $total_beneficiaries = (float) $get('life_insurance.total_beneficiaries');
-//        dd($total_beneficiaries);
         $percentageAssigned = 0;
         $countOfPercentageZero = 0;
         for ($i = 1; $i <= $total_beneficiaries; $i++) {
             // Convert to float to ensure we're working with numbers, not strings
-            $currentPercentage = (float) $get('life_insurance.contingents.'.$i.'.percentage');
+            $currentPercentage = (float) $get('life_insurance.beneficiaries.'.$i.'.percentage');
             // Add to the total percentage assigned
             $percentageAssigned += $currentPercentage;
             if ($currentPercentage == 0) {
@@ -680,21 +809,18 @@ class EditPolicyLife extends EditRecord
         }
 
         if ($countOfPercentageZero > 0) {
-
-
             if ((100 - $percentageAssigned) > 0) {
                 for ($i = 1; $i <= $total_beneficiaries; $i++) {
                     $currentPercentage = (float) $get('life_insurance.beneficiaries.'.$i.'.percentage');
                     if ($currentPercentage == 0) {
                         $set('life_insurance.beneficiaries.'.$i.'.percentage',
-                            (100 - $percentageAssigned) / $countOfPercentageZero);
+                            number_format((100 - $percentageAssigned) / $countOfPercentageZero, 2));
                         $set('life_insurance.beneficiaries.total_percentage', 100);
                     }
                 }
             }
-
         } else {
-            $set('life_insurance.beneficiaries.total_percentage', $percentageAssigned);
+            $set('life_insurance.beneficiaries.total_percentage', number_format($percentageAssigned, 2));
         }
     }
 
@@ -715,21 +841,18 @@ class EditPolicyLife extends EditRecord
         }
 
         if ($countOfPercentageZero > 0) {
-
-
             if ((100 - $percentageAssigned) > 0) {
                 for ($i = 1; $i <= $total_contingents; $i++) {
                     $currentPercentage = (float) $get('life_insurance.contingents.'.$i.'.percentage');
                     if ($currentPercentage == 0) {
                         $set('life_insurance.contingents.'.$i.'.percentage',
-                            (100 - $percentageAssigned) / $countOfPercentageZero);
+                            number_format((100 - $percentageAssigned) / $countOfPercentageZero, 2));
                         $set('life_insurance.contingents.total_percentage', 100);
                     }
                 }
             }
-
         } else {
-            $set('life_insurance.contingents.total_percentage', $percentageAssigned);
+            $set('life_insurance.contingents.total_percentage', number_format($percentageAssigned, 2));
         }
     }
 }

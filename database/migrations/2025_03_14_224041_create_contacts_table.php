@@ -35,8 +35,8 @@ return new class extends Migration
             $table->string('whatsapp')->nullable();
             $table->string('kommo_id')->nullable();
             $table->date('date_of_birth')->nullable();
-            $table->enum('gender', ['male', 'female', 'other', 'prefer_not_to_say'])->nullable();
-            $table->enum('marital_status', ['single', 'married', 'divorced', 'widowed', 'separated'])->nullable();
+            $table->string('gender')->nullable();
+            $table->string('marital_status')->nullable();
             $table->string('country_of_birth')->nullable();
             $table->decimal('weight', 5, 2)->nullable(); // Up to 999.99
             $table->decimal('height', 5, 2)->nullable(); // Up to 99.99

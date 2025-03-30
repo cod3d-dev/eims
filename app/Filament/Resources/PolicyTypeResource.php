@@ -21,7 +21,7 @@ class PolicyTypeResource extends Resource
 
 
     protected static ?string $navigationGroup = 'Ajustes';
-//    protected static ?int $navigationSort = 2;
+   protected static ?int $navigationSort = 9;
 
     protected static ?string $navigationLabel = 'Tipos de Polizas';
     protected static ?string $modelLabel = 'Tipo de Poliza';

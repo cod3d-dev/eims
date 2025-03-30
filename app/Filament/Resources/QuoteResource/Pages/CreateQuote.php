@@ -17,6 +17,7 @@ class CreateQuote extends CreateRecord
 
         // Handle contact creation/update
 
+        dd($data['contact_information']);
         if ($data['create_new_client'] ?? false) {
             // Create a new contact with the provided information
             $contact = \App\Models\Contact::create([
@@ -35,6 +36,7 @@ class CreateQuote extends CreateRecord
                 'is_eligible_for_coverage' => $data['contact_information']['is_eligible_for_coverage'] ?? false,
                 'zip_code' => $data['contact_information']['zip_code'],
                 'county' => $data['contact_information']['county'],
+                'city' => $data['contact_information']['city'],
                 'state_province' => $data['contact_information']['state'],
                 'created_by' => auth()->user()->id
             ]);
@@ -59,6 +61,7 @@ class CreateQuote extends CreateRecord
                     'is_eligible_for_coverage' => $data['contact_information']['is_eligible_for_coverage'] ?? false,
                     'zip_code' => $data['contact_information']['zip_code'],
                     'county' => $data['contact_information']['county'],
+                    'city' => $data['contact_information']['city'],
                     'state_province' => $data['contact_information']['state'],
                 ]);
             }

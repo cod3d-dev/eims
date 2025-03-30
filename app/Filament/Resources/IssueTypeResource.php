@@ -20,7 +20,7 @@ class IssueTypeResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     protected static ?string $navigationGroup = 'Ajustes';
-//    protected static ?int $navigationSort = 2;
+   protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationLabel = 'Tipos de Problemas';
     protected static ?string $modelLabel = 'Problema';

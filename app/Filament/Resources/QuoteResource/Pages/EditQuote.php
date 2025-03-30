@@ -84,6 +84,12 @@ class EditQuote extends EditRecord
                         'whatsapp' => $record->contact_information['whatsapp'] ?? $contact->whatsapp,
                         'email_address' => $record->contact_information['email_address'] ?? $contact->email_address,
                         'zip_code' => $record->contact_information['zip_code'] ?? $contact->zip_code,
+                        'county' => $record->contact_information['county'] ?? $contact->county,
+                        'city' => $record->contact_information['city'] ?? $contact->city,
+                        'state_province' => $record->contact_information['state'] ?? $contact->state_province,
+                        'is_tobacco_user' => $record->contact_information['is_tobacco_user'] ?? $contact->is_tobacco_user,
+                        'is_pregnant' => $record->contact_information['is_pregnant'] ?? $contact->is_pregnant,
+                        'is_eligible_for_coverage' => $record->contact_information['is_eligible_for_coverage'] ?? $contact->is_eligible_for_coverage,
                         'kommo_id' => $record->contact_information['kommo_id'] ?? $contact->kommo_id,
                     ]);
                     \Log::info('Contact updated successfully');

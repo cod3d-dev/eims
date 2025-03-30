@@ -8,6 +8,8 @@ use App\Models\Contact;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Enums\MaritialStatus;
+use App\Enums\Gender;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Contact>
@@ -77,8 +79,8 @@ class ContactFactory extends Factory
             'whatsapp' => $this->faker->optional()->phoneNumber(),
             // date of birth is required all the time and it should be a valid data (máx 120 years)
             'date_of_birth' => $this->faker->date('Y-m-d', '-120 years'),
-            'gender' => $this->faker->randomElement(['male', 'female']),
-            'marital_status' => $this->faker->optional()->randomElement(['single', 'married', 'divorced', 'widowed', 'separated']),
+            'gender' => $this->faker->randomElement(Gender::class)->value,
+            'marital_status' => $this->faker->randomElement(MaritialStatus::class)->value,
             'country_of_birth' => $this->faker->optional()->country(),
             'weight' => $this->faker->optional()->randomFloat(2, 50, 300),
             'height' => $this->faker->optional()->randomFloat(2, 4, 7),

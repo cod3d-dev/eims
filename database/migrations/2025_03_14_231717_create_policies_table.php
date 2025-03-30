@@ -22,7 +22,7 @@ return new class extends Migration
             $table->foreignId('quote_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('agent_id')->nullable()->constrained()->nullOnDelete();
             $table->string('policy_number')->nullable();
-            $table->string('policy_year')->nullable();
+            $table->integer('policy_year')->nullable();
             $table->boolean('has_existing_kynect_case')->default(false);
             $table->string('policy_us_county')->nullable();
             $table->string('policy_us_state')->nullable();

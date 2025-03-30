@@ -28,7 +28,7 @@ use Filament\Forms\Components\Actions\Action;
 //use App\Actions\Star;
 use Filament\Forms\Components\Actions;
 use App\Enums\Gender;
-use App\Models\PolicyType;
+use App\Enums\PolicyType;
 use App\Enums\UsState;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -92,11 +92,11 @@ class QuoteResource extends Resource
                                             ->preload()
                                             ->default(auth()->user()->id)
                                             ->columnSpan(2),
-                                        Forms\Components\Select::make('policy_type_id')
-                                            ->relationship('policyType', 'name')
+                                        Forms\Components\Select::make('policy_type')
+                                            ->options(PolicyType::class)
                                             ->required()
                                             ->label('Tipo')
-                                            ->default(1)
+                                            ->default(PolicyType::Health)
                                             ->columnSpan(2),
                                         Forms\Components\Select::make('year')
                                             ->required()
@@ -132,7 +132,7 @@ class QuoteResource extends Resource
                                                         $policyId = $get('policy_id');
 
                                                         if ($policyId) {
-                                                            return route('filament.app.resources.policies.view', ['record' => $policyId]);
+                                                            return PolicyResource::getUrl('view', ['record' => $policyId]);
                                                         }
                                                         return '';
                                                     })
@@ -853,6 +853,10 @@ class QuoteResource extends Resource
                 ])
                     ->tooltip('Acciones')
                     ->icon('heroicon-m-ellipsis-vertical'),
+                Tables\Actions\Action::make('print')
+                    ->url(fn (Quote $record): string => QuoteResource::getUrl('print', ['record' => $record]))
+                    ->label('Imprimir')
+                    ->icon('iconoir-printing-page'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -877,7 +881,7 @@ class QuoteResource extends Resource
             'create' => Pages\CreateQuote::route('/create'),
             'edit' => Pages\EditQuote::route('/{record}/edit'),
 //            'view' => Pages\ViewQuote::route('/{record}'),
-//            'print' => Pages\PrintHealthSherpa::route('/{record}/print'),
+            'print' => Pages\PrintQuote::route('/{record}/print'),
         ];
     }
 }

@@ -49,6 +49,7 @@ use Filament\Tables\Enums\FiltersLayout;
 use App\Enums\UsState;
 
 
+
 class PolicyResource extends Resource
 {
     protected static ?string $model = Policy::class;
@@ -74,7 +75,7 @@ class PolicyResource extends Resource
         return $record->contact->full_name;
     }
 
-    public static function getGloballySearchableAttributes(): array 
+    public static function getGloballySearchableAttributes(): array
     {
         return ['contact.first_name', 'contact.middle_name', 'contact.last_name', 'contact.second_last_name'];
     }
@@ -152,9 +153,16 @@ class PolicyResource extends Resource
                             ->searchable(),
                         Forms\Components\Select::make('policy_year')
                             ->label('Año')
-                            ->options(function (Get $get) {
-                                $year = Carbon::now()->year;
-                                return range($year - 5, $year + 5);
+                            ->options(function() {
+                                $startYear = 2018;
+                                $endYear = Carbon::now()->addYears(2)->year;
+                                $years = [];
+
+                                for ($year = $startYear; $year <= $endYear; $year++) {
+                                    $years[$year] = $year;
+                                }
+
+                                return $years;
                             })
                             ->default(Carbon::now()->year),
                         Forms\Components\DatePicker::make('effective_date')
@@ -294,10 +302,10 @@ class PolicyResource extends Resource
                                     ->orWhere('last_name', 'like', "%{$search}%")
                                     ->orWhere('second_last_name', 'like', "%{$search}%");
                             });
-                            
+
                             // Search in additional applicants JSON field
                             $query->orWhereRaw("JSON_SEARCH(LOWER(additional_applicants), 'one', LOWER(?)) IS NOT NULL", ["%{$search}%"]);
-                            
+
                             return $query;
                         });
                     })
@@ -309,7 +317,7 @@ class PolicyResource extends Resource
                             ->select('policies.*');
                     })
                     ->html()
-                    ->formatStateUsing(function(string $state, Policy $record): string { 
+                    ->formatStateUsing(function(string $state, Policy $record): string {
                         $customers = $state;
 
                         foreach ($record->additional_applicants as $applicant) {
@@ -326,7 +334,12 @@ class PolicyResource extends Resource
                     ->label('Empresa')
                     ->sortable()
                     ->badge()
-                    ->tooltip(fn(Policy $record): string => $record->insuranceCompany->name)
+                    ->tooltip(function ($record) {
+                        if (!$record || !$record->insuranceCompany) {
+                            return '';
+                        }
+                        return $record->insuranceCompany->name;
+                    })
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('insuranceCompany', function (Builder $query) use ($search): Builder {
                             return $query->where('name', 'like', "%{$search}%");
@@ -430,13 +443,16 @@ class PolicyResource extends Resource
                    ->relationship('agent', 'name'),
                Tables\Filters\SelectFilter::make('policy_year')
                    ->label('Año Efectivo')
-                   ->options([
-                    (date('Y') - 2) => (date('Y') - 2),
-                    (date('Y') - 1) => (date('Y') - 1),
-                    date('Y') => date('Y'),
-                    (date('Y') + 1) => (date('Y') + 1),
-                    (date('Y') + 2) => (date('Y') + 2),
-                   ]),
+                   ->options(function() {
+                    $startYear = 2018;
+                    $endYear = Carbon::now()->addYears(2)->year;
+                    $years = [];
+                    for ($year = $startYear; $year <= $endYear; $year++) {
+                        $years[$year] = $year;
+                    }
+
+                    return $years;
+                }),
                Tables\Filters\SelectFilter::make('status')
                    ->label('Estatus')
                    ->options(PolicyStatus::class),
@@ -496,7 +512,7 @@ class PolicyResource extends Resource
                             unset($data['renewed_to_policy_id']);
                             unset($data['renewed_by']);
                             unset($data['renewed_at']);
-                            
+
                             return $data;
                         })
                         ->beforeReplicaSaved(function (Policy $replica, array $data): void {
@@ -504,7 +520,7 @@ class PolicyResource extends Resource
                             $replica->policy_type = $data['policy_type'];
                             $replica->start_date = $data['start_date'];
                             $replica->end_date = $data['end_date'];
-                            $replica->notes = ($replica->notes ? $replica->notes . "\n\n" : '') . 
+                            $replica->notes = ($replica->notes ? $replica->notes . "\n\n" : '') .
                                 "=== Notas de Duplicación ===\n" . ($data['notes'] ?? 'Póliza duplicada el ' . now()->format('Y-m-d H:i:s'));
                         })
                         ->afterReplicaSaved(function (Policy $replica): void {
@@ -647,6 +663,7 @@ class PolicyResource extends Resource
             'index' => Pages\ListPolicies::route('/'),
             'create' => Pages\CreatePolicy::route('/create'),
             'view' => Pages\ViewPolicy::route('/{record}'),
+            'view-compact' => Pages\ViewPolicyCompact::route('/{record}/compact'),
 //            'view-contact' => Pages\ViewPolicyContact::route('/{record}/contact'),
             'edit' => Pages\EditPolicy::route('/{record}/edit'),
             'edit-contact' => Pages\EditPolicyContact::route('/{record}/edit/contact'),

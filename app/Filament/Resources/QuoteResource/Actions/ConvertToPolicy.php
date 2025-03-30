@@ -23,11 +23,13 @@ class ConvertToPolicy extends Action
             ->color('success')
             ->action(function (ConvertToPolicy $action, Model $record): void {
                 // Create new policy from the quote
+                // dd($record);
                 $action->policy = Policy::create([
                     'contact_id' => $record->contact_id,
                     'user_id' => auth()->id(),
                     'insurance_company_id' => $record->insurance_company_id,
-                    'policy_type_id' => $record->policy_type_id,
+                    'policy_type' => $record->policy_type,
+                    'agent_id' => $record->agent_id,
                     'quote_id' => $record->id,
                     'policy_total_cost' => $record->premium_amount,
                     'premium_amount' => $record->premium_amount,
@@ -42,6 +44,7 @@ class ConvertToPolicy extends Action
                     'contact_information' => $record->contact_information,
                     'status' => PolicyStatus::Draft,
                     'document_status' => DocumentStatus::ToAdd,
+                    'policy_year' => $record->year,
                 ]);
 
                 // Update the quote status to Converted and add policy reference

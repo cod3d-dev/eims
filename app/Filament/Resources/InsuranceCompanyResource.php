@@ -19,6 +19,13 @@ class InsuranceCompanyResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = 'Ajustes';
+   protected static ?int $navigationSort = 1;
+
+    protected static ?string $navigationLabel = 'Aseguradoras';
+    protected static ?string $modelLabel = 'Aseguradora';
+    protected static ?string $pluralModelLabel = 'Aseguradoras';
+
     public static function form(Form $form): Form
     {
         return $form

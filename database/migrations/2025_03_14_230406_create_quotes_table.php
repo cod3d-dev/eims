@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('policy_id')->nullable();
             $table->foreignId('insurance_company_id')->nullable();
             $table->foreignId('agent_id')->nullable();
-            $table->foreignId('policy_type_id')->constrained();
+            $table->string('policy_type')->nullable();
             $table->decimal('premium_amount', 10, 2)->nullable();
             $table->decimal('coverage_amount', 12, 2)->nullable();
             $table->integer('year')->nullable();

@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Enums\Gender;
+use App\Enums\MaritialStatus;
 
 class Contact extends Model
 {
@@ -15,6 +17,8 @@ class Contact extends Model
 
     protected $casts = [
         'date_of_birth' => 'date',
+        'gender' => Gender::class,
+        'marital_status' => MaritialStatus::class,
         'is_lead' => 'boolean',
         'is_eligible_for_coverage' => 'boolean',
         'is_tobacco_user' => 'boolean',
@@ -48,6 +52,21 @@ class Contact extends Model
         }
 
         return implode(' ', $names);
+    }
+
+    public function getFullAddressLinesAttribute(): string
+    {
+        $address = [];
+
+        if ($this->address_line_1) {
+            $address[] = $this->address_line_1;
+        }
+
+        if ($this->address_line_2) {
+            $address[] = $this->address_line_2;
+        }
+
+        return implode(', ', $address);
     }
 
     public function creator(): BelongsTo
