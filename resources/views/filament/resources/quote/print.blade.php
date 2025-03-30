@@ -35,7 +35,7 @@
                         </div>
                         <div class="col-span-1">
                             <p class="text-sm font-medium text-gray-500">Tipo</p>
-                            <p class="mt-1">{{ $record->policyType->name }}</p>
+                            <p class="mt-1">{{ $record->policy_type->getLabel() }}</p>
                         </div>
                         <div class="col-span-1">
                             <p class="text-sm font-medium">Estado</p>
@@ -180,7 +180,7 @@
                                             <td class="px-6 py-4 text-sm text-gray-900">{{ number_format($applicant->yearly_income, 2) }}</td>
                                         @else
                                             @php
-                                                $relation = FamilyRelationship::from($applicant->relationship)->label();
+                                                $relation = FamilyRelationship::from($applicant->relationship)->getLabel();
                                             @endphp
 
                                             <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $relation }}</td>
