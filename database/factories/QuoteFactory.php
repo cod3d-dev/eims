@@ -7,7 +7,7 @@ use App\Enums\QuoteStatus;
 use App\Models\Agent;
 use App\Models\Contact;
 use App\Models\InsuranceCompany;
-use App\Models\PolicyType;
+use App\Enums\PolicyType;
 use App\Models\User;
 use App\ValueObjects\Applicant;
 use App\ValueObjects\ApplicantCollection;
@@ -69,7 +69,7 @@ class QuoteFactory extends Factory
             'policy_id' => null,
             'insurance_company_id' => $insuranceCompany?->id,
             'agent_id' => $agent?->id,
-            'policy_type_id' => $policyType?->id,
+            'policy_type' => $this->faker->randomElement(PolicyType::cases())->value,
             'premium_amount' => $this->faker->randomFloat(2, 50, 1000),
             'coverage_amount' => $this->faker->randomFloat(2, 10000, 1000000),
             'year' => Carbon::now()->year,
