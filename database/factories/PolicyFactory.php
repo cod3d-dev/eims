@@ -70,12 +70,21 @@ class PolicyFactory extends Factory
         // Generate prescription drugs
         $prescriptionDrugs = $this->generatePrescriptionDrugs();
 
+        // Default policy type (can be overridden by state methods)
+        $policyType = $this->faker->randomElement(PolicyType::class);
+        
+        // Generate life insurance data if policy type is Life
+        $lifeInsurance = null;
+        if ($policyType === PolicyType::Life) {
+            $lifeInsurance = $this->generateLifeInsuranceData($mainApplicant);
+        }
+
         return [
             // Basic Information
             'contact_id' => $contact->id,
             'user_id' => $user->id,
             'insurance_company_id' => $insuranceCompany->id,
-            'policy_type' => $this->faker->randomElement(PolicyType::class),
+            'policy_type' => $policyType,
             'quote_id' => $quote?->id,
             'agent_id' => $agent->id,
             'policy_number' => $this->faker->regexify('[A-Z]{2}[0-9]{6}'),
@@ -119,6 +128,9 @@ class PolicyFactory extends Factory
             'preferred_doctor' => $this->faker->optional(0.5)->name(),
             'prescription_drugs' => $prescriptionDrugs,
             'contact_information' => $contactInformation,
+            
+            // Life Insurance Data
+            'life_insurance' => $lifeInsurance,
 
             // Policy Status and Dates
             'start_date' => $effectiveDate,
@@ -392,5 +404,195 @@ class PolicyFactory extends Factory
         }
 
         return $total;
+    }
+
+    /**
+     * Generate realistic life insurance data
+     */
+    private function generateLifeInsuranceData(array $mainApplicant): array
+    {
+        // Generate 1-3 beneficiaries
+        $totalBeneficiaries = $this->faker->numberBetween(1, 3);
+        $beneficiaries = [];
+        $totalPercentage = 0;
+        
+        // Calculate percentages for beneficiaries
+        $percentages = $this->distributePercentages($totalBeneficiaries);
+        
+        // Generate beneficiary data
+        for ($i = 1; $i <= $totalBeneficiaries; $i++) {
+            $relationship = $this->faker->randomElement(\App\Enums\FamilyRelationship::cases());
+            $beneficiaries[$i] = [
+                'name' => $this->faker->name(),
+                'date_of_birth' => $this->faker->date('Y-m-d', '-30 years'),
+                'relationship' => $relationship->value,
+                'id_number' => $this->faker->regexify('[0-9]{8}'),
+                'phone_number' => $this->faker->phoneNumber(),
+                'email' => $this->faker->email(),
+                'percentage' => $percentages[$i - 1],
+            ];
+            $totalPercentage += $percentages[$i - 1];
+        }
+        
+        // Generate 0-2 contingent beneficiaries
+        $totalContingents = $this->faker->numberBetween(0, 2);
+        $contingents = [];
+        $totalContingentPercentage = 0;
+        
+        if ($totalContingents > 0) {
+            // Calculate percentages for contingent beneficiaries
+            $contingentPercentages = $this->distributePercentages($totalContingents);
+            
+            // Generate contingent beneficiary data
+            for ($i = 1; $i <= $totalContingents; $i++) {
+                $relationship = $this->faker->randomElement(\App\Enums\FamilyRelationship::cases());
+                $contingents[$i] = [
+                    'name' => $this->faker->name(),
+                    'date_of_birth' => $this->faker->date('Y-m-d', '-30 years'),
+                    'relationship' => $relationship->value,
+                    'id_number' => $this->faker->regexify('[0-9]{8}'),
+                    'phone_number' => $this->faker->phoneNumber(),
+                    'email' => $this->faker->email(),
+                    'percentage' => $contingentPercentages[$i - 1],
+                ];
+                $totalContingentPercentage += $contingentPercentages[$i - 1];
+            }
+        }
+        
+        // Generate physical data
+        $heightCm = $this->faker->numberBetween(150, 200);
+        $heightFeet = number_format($heightCm / 30.48, 2);
+        $weightKg = $this->faker->numberBetween(50, 120);
+        $weightLbs = number_format($weightKg / 0.45359237, 2);
+        
+        // Generate medical data
+        $hasDiagnosis = $this->faker->boolean(30);
+        $diagnosisDate = $hasDiagnosis ? $this->faker->dateTimeBetween('-5 years', 'now')->format('Y-m-d') : null;
+        $diagnosis = $hasDiagnosis ? $this->faker->sentence(10) : null;
+        
+        $hasDisease = $this->faker->boolean(20);
+        $disease = $hasDisease ? $this->faker->randomElement(['Diabetes', 'Hipertensión', 'Asma', 'Artritis', 'Migraña']) : null;
+        
+        $hasBeenHospitalized = $this->faker->boolean(25);
+        $hospitalizedDate = $hasBeenHospitalized ? $this->faker->dateTimeBetween('-3 years', 'now')->format('Y-m-d') : null;
+        
+        // Generate family medical history
+        $fatherIsAlive = $this->faker->boolean(70);
+        $fatherAge = $fatherIsAlive ? $this->faker->numberBetween(50, 90) : $this->faker->numberBetween(50, 80);
+        $fatherDeathReason = $fatherIsAlive ? null : $this->faker->randomElement(['Cáncer', 'Infarto', 'Accidente', 'Causas naturales']);
+        
+        $motherIsAlive = $this->faker->boolean(75);
+        $motherAge = $motherIsAlive ? $this->faker->numberBetween(50, 90) : $this->faker->numberBetween(50, 80);
+        $motherDeathReason = $motherIsAlive ? null : $this->faker->randomElement(['Cáncer', 'Infarto', 'Accidente', 'Causas naturales']);
+        
+        $hasFamilyMemberWithDisease = $this->faker->boolean(40);
+        $familyMemberRelationship = $hasFamilyMemberWithDisease ? $this->faker->randomElement(['Hermano/a', 'Tío/a', 'Abuelo/a', 'Primo/a']) : null;
+        $familyMemberDiseaseDescription = $hasFamilyMemberWithDisease ? $this->faker->randomElement(['Cáncer', 'Diabetes', 'Enfermedad cardíaca', 'Alzheimer', 'Parkinson']) : null;
+        
+        // Generate employment information
+        $employerName = $this->faker->company();
+        $jobTitle = $this->faker->jobTitle();
+        $employmentPhone = $this->faker->phoneNumber();
+        $employmentAddress = $this->faker->address();
+        $employmentStartDate = $this->faker->dateTimeBetween('-10 years', '-1 month')->format('Y-m-d');
+        
+        // Compile all life insurance data
+        return [
+            'applicant' => [
+                'height_cm' => $heightCm,
+                'height_feet' => $heightFeet,
+                'weight_kg' => $weightKg,
+                'weight_lbs' => $weightLbs,
+                'smoker' => $this->faker->boolean(20),
+                'practice_extreme_sport' => $this->faker->boolean(15),
+                'has_made_felony' => $this->faker->boolean(5),
+                'has_declared_bankruptcy' => $this->faker->boolean(10),
+                'plans_to_travel_abroad' => $this->faker->boolean(30),
+                'allows_videocall' => $this->faker->boolean(90),
+                'primary_doctor' => $this->faker->name('male'),
+                'primary_doctor_phone' => $this->faker->phoneNumber(),
+                'primary_doctor_address' => $this->faker->address(),
+                'diagnosis_date' => $diagnosisDate,
+                'diagnosis' => $diagnosis,
+                'disease' => $disease,
+                'drugs_prescribed' => $hasDiagnosis ? $this->faker->sentence(5) : null,
+                'has_been_hospitalized' => $hasBeenHospitalized,
+                'hospitalized_date' => $hospitalizedDate,
+                'patrimony' => $this->faker->randomFloat(2, 10000, 500000),
+            ],
+            'father' => [
+                'is_alive' => $fatherIsAlive,
+                'age' => $fatherAge,
+                'death_reason' => $fatherDeathReason,
+            ],
+            'mother' => [
+                'is_alive' => $motherIsAlive,
+                'age' => $motherAge,
+                'death_reason' => $motherDeathReason,
+            ],
+            'family' => [
+                'member_final_disease' => $hasFamilyMemberWithDisease,
+                'member_final_disease_relationship' => $familyMemberRelationship,
+                'member_final_disease_description' => $familyMemberDiseaseDescription,
+            ],
+            'employer' => [
+                'name' => $employerName,
+                'job_title' => $jobTitle,
+                'employment_phone' => $employmentPhone,
+                'employment_address' => $employmentAddress,
+                'employment_start_date' => $employmentStartDate,
+            ],
+            'total_beneficiaries' => $totalBeneficiaries,
+            'beneficiaries' => array_merge($beneficiaries, ['total_percentage' => $totalPercentage]),
+            'total_contingents' => $totalContingents,
+            'contingents' => $totalContingents > 0 ? array_merge($contingents, ['total_percentage' => $totalContingentPercentage]) : [],
+        ];
+    }
+    
+    /**
+     * Distribute percentages to equal 100%
+     */
+    private function distributePercentages(int $count): array
+    {
+        if ($count === 1) {
+            return [100];
+        }
+        
+        $percentages = [];
+        $remaining = 100;
+        
+        for ($i = 0; $i < $count - 1; $i++) {
+            // For all but the last item, assign a random percentage
+            $max = $remaining - ($count - $i - 1); // Ensure at least 1% for each remaining item
+            $percentage = $this->faker->numberBetween(1, max(1, $max));
+            $percentages[] = $percentage;
+            $remaining -= $percentage;
+        }
+        
+        // Assign the remaining percentage to the last item
+        $percentages[] = $remaining;
+        
+        return $percentages;
+    }
+    
+    /**
+     * Configure the model factory to create a Life insurance policy.
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function life()
+    {
+        return $this->state(function (array $attributes) {
+            // Get the main applicant from attributes or use an empty array as fallback
+            $mainApplicant = $attributes['main_applicant'] ?? [];
+            
+            // Force generate life insurance data regardless of what was in the attributes
+            $lifeInsurance = $this->generateLifeInsuranceData($mainApplicant);
+            
+            return [
+                'policy_type' => PolicyType::Life,
+                'life_insurance' => $lifeInsurance,
+            ];
+        });
     }
 }

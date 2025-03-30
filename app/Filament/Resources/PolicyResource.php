@@ -438,6 +438,10 @@ class PolicyResource extends Resource
                 //     }),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('user_id')
+                   ->label('Usuario')
+                   ->relationship('user', 'name')
+                   ->default(auth()->user()->id),
                Tables\Filters\SelectFilter::make('agent.name')
                    ->label('Agente')
                    ->relationship('agent', 'name'),
