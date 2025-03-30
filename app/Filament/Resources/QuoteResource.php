@@ -868,12 +868,12 @@ class QuoteResource extends Resource
             ]);
     }
 
-    public static function getRelations(): array
-    {
-        return [
-            RelationManagers\QuoteDocumentsRelationManager::class,
-        ];
-    }
+    // public static function getRelations(): array
+    // {
+    //     return [
+    //         RelationManagers\QuoteDocumentsRelationManager::class,
+    //     ];
+    // }
     public static function getPages(): array
     {
         return [
