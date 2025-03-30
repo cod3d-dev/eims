@@ -40,7 +40,6 @@ class QuoteFactory extends Factory
     {
         $contact = Contact::inRandomOrder()->first() ?? Contact::factory()->create();
         $user = User::inRandomOrder()->first();
-        $policyType = PolicyType::inRandomOrder()->first();
         $insuranceCompany = InsuranceCompany::inRandomOrder()->first();
         $agent = Agent::inRandomOrder()->first();
 
