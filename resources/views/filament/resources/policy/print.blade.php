@@ -844,7 +844,13 @@
                         <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; color: #6B7280;">Patrimonio</h3>
                         <div>
                             <p class="text-sm font-medium text-gray-500">Patrimonio</p>
-                            <p class="mt-1">${{ number_format($record->life_insurance['applicant']['patrimony'], 2) ?? 'N/A' }}</p>
+                            <p class="mt-1">
+                                @if(isset($record->life_insurance['applicant']['patrimony']) && $record->life_insurance['applicant']['patrimony'] !== null)
+                                    ${{ number_format($record->life_insurance['applicant']['patrimony'], 2) }}
+                                @else
+                                    N/A
+                                @endif
+                            </p>
                         </div>
                     </div>
 

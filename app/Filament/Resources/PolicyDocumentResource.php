@@ -103,7 +103,7 @@ class PolicyDocumentResource extends Resource
                                 ->orWhere('second_last_name', 'like', "%{$search}%");
                         });
                     })
-                    ->description(fn(PolicyDocument $record): string => $record->policy->policyType->name . ': ' . $record->policy->insuranceCompany->name ?? '' ),
+                    ->description(fn(PolicyDocument $record): string => $record->policy->policy_type . ': ' . $record->policy->insuranceCompany->name ?? '' ),
                 Tables\Columns\TextColumn::make('documentType.name')
                     ->label('Tipo')
                     ->sortable(),
