@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\DocumentStatus;
 use App\Enums\PolicyStatus;
 use App\Enums\UsState;
+use App\Enums\PolicyType;
 use App\Filament\Resources\PolicyDocumentResource\Pages;
 use App\Filament\Resources\PolicyDocumentResource\RelationManagers;
 use App\Models\Policy;
@@ -103,7 +104,7 @@ class PolicyDocumentResource extends Resource
                                 ->orWhere('second_last_name', 'like', "%{$search}%");
                         });
                     })
-                    ->description(fn(PolicyDocument $record): string => App\Enums\PolicyType::tryFrom($record->policy->policy_type)->getLabel() . ': ' . $record->policy->insuranceCompany->name ?? '' ),
+                    ->description(fn(PolicyDocument $record): string => $record->policy->policy_type->getLabel() . ': ' . $record->policy->insuranceCompany->name ?? '' ),
                 Tables\Columns\TextColumn::make('documentType.name')
                     ->label('Tipo')
                     ->sortable(),
