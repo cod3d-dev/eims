@@ -19,6 +19,7 @@ class Applicant implements Arrayable
         public bool $is_tobacco_user = false,
         public bool $is_pregnant = false,
         public bool $is_eligible_for_coverage = false,
+        public bool $medicaid_client = false,
         public ?string $country_of_birth = null,
         public ?string $civil_status = null,
         public ?string $phone1 = null,
@@ -86,6 +87,7 @@ class Applicant implements Arrayable
             is_tobacco_user: $data['is_tobacco_user'] ?? false,
             is_pregnant: $data['is_pregnant'] ?? false,
             is_eligible_for_coverage: $data['is_eligible_for_coverage'] ?? false,
+            medicaid_client: $data['medicaid_client'] ?? false,
             country_of_birth: $data['country_of_birth'] ?? null,
             civil_status: $data['civil_status'] ?? null,
             phone1: $data['phone1'] ?? null,
@@ -172,6 +174,11 @@ class Applicant implements Arrayable
             ->every(fn ($field) => !is_null($this->{$field}));
     }
 
+    public function isMedicaidClient(): bool
+    {
+        return $this->medicaid_client;
+    }
+
     public function getMissingPolicyFields(): array
     {
         return collect(self::requiredFieldsForPolicy())
@@ -203,6 +210,7 @@ class Applicant implements Arrayable
             'is_tobacco_user' => $this->is_tobacco_user,
             'is_pregnant' => $this->is_pregnant,
             'is_eligible_for_coverage' => $this->is_eligible_for_coverage,
+            'medicaid_client' => $this->medicaid_client,
             'country_of_birth' => $this->country_of_birth,
             'civil_status' => $this->civil_status,
             'phone1' => $this->phone1,

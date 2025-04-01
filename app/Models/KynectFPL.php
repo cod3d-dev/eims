@@ -61,6 +61,25 @@ class KynectFPL extends Model
         return $baseAmount + ($record->additional_member * $extraMembers);
     }
 
+    public static function getCurrentThreshold(int $householdSize): ?float
+    {
+        $record = self::latest()->first();
+
+        if (!$record) {
+            return null;
+        }
+
+        if ($householdSize <= 8) {
+            return $record->{"members_" . $householdSize};
+        }
+
+        // For households > 8, calculate base + additional
+        $baseAmount = $record->members_8;
+        $extraMembers = $householdSize - 8;
+
+        return $baseAmount + ($record->additional_member * $extraMembers);
+    }
+
     /**
      * Get both monthly and yearly thresholds for a household size
      */

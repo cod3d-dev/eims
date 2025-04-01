@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Filament\Tables\Enums\FiltersLayout;
 
 class QuoteResource extends Resource
 {
@@ -806,38 +807,145 @@ class QuoteResource extends Resource
                     ->label('Año')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Creado')
+                    ->label('Creada')
                     ->dateTime('m/d/Y H:i')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
+                    ->label('Estatus')
                     ->badge()
-//                    ->url(fn (Quote $record): ?string => $record->policy_id ? route('filament.app.resources.policies.view', ['record' => $record->policy_id]) : null)
-                    ->searchable(),
+                    ->sortable(),
 
             ])
             ->filters([
-                Tables\Filters\Filter::make('state')
-                    ->form([
-                        Forms\Components\Select::make('state')
-                            ->label('Estado')
-                            ->options(\App\Enums\UsState::class)
-                            ->placeholder('Seleccionar estado'),
-                    ])
-//                    ->query(function ($query, array $data): mixed {
-//                        return $query->when(
-//                            $data['state'],
-//                            fn ($query, $state): mixed => $query->where(function ($query) use ($state) {
-//                                $query->whereRaw('JSON_UNQUOTE(JSON_EXTRACT(contact_information, "$.state")) = ?', [$state]);
-//                            })
-//                        );
-//                    }),
-//                Tables\Filters\SelectFilter::make('status')
-//                    ->options(function () {
-//                        return QuoteStatus::class;
-//                    }),
-            ])
+                Tables\Filters\SelectFilter::make('user_id')
+                   ->label('Usuario')
+                   ->relationship('user', 'name')
+                   ->default(auth()->user()->id),
+                Tables\Filters\SelectFilter::make('agent.name')
+                   ->label('Agente')
+                   ->relationship('agent', 'name'),
+                Tables\Filters\SelectFilter::make('year')
+                   ->label('Año Efectivo')
+                   ->options(function() {
+                    $startYear = 2018;
+                    $endYear = Carbon::now()->addYears(2)->year;
+                    $years = [];
+                    for ($year = $startYear; $year <= $endYear; $year++) {
+                        $years[$year] = $year;
+                    }
+                    return $years;
+                }),
+                Tables\Filters\SelectFilter::make('state_province')
+                    ->label('Estado')
+                    ->options(UsState::class),
+                Tables\Filters\SelectFilter::make('status')
+                    ->label('Estatus')
+                    ->options(QuoteStatus::class),
+                Tables\Filters\SelectFilter::make('created_week')
+                    ->label('Semana de Creación')
+                    ->options(function() {
+                        $options = [];
+                        $currentWeek = Carbon::now()->startOfWeek();
+                        
+                        // Current week
+                        $weekStart = $currentWeek->copy()->format('Y-m-d');
+                        $weekEnd = $currentWeek->copy()->endOfWeek()->format('Y-m-d');
+                        $options["current"] = "Semana Actual ({$weekStart} - {$weekEnd})";
+                        
+                        // Past 3 weeks
+                        for ($i = 1; $i <= 3; $i++) {
+                            $weekStart = $currentWeek->copy()->subWeeks($i)->format('Y-m-d');
+                            $weekEnd = $currentWeek->copy()->subWeeks($i)->endOfWeek()->format('Y-m-d');
+                            $options["week_{$i}"] = "Hace {$i} semana" . ($i > 1 ? 's' : '') . " ({$weekStart} - {$weekEnd})";
+                        }
+                        
+                        return $options;
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+                        
+                        $currentWeek = Carbon::now()->startOfWeek();
+                        
+                        return match ($data['value']) {
+                            'current' => $query->whereBetween('created_at', [
+                                $currentWeek->copy()->startOfWeek(),
+                                $currentWeek->copy()->endOfWeek(),
+                            ]),
+                            'week_1' => $query->whereBetween('created_at', [
+                                $currentWeek->copy()->subWeeks(1)->startOfWeek(),
+                                $currentWeek->copy()->subWeeks(1)->endOfWeek(),
+                            ]),
+                            'week_2' => $query->whereBetween('created_at', [
+                                $currentWeek->copy()->subWeeks(2)->startOfWeek(),
+                                $currentWeek->copy()->subWeeks(2)->endOfWeek(),
+                            ]),
+                            'week_3' => $query->whereBetween('created_at', [
+                                $currentWeek->copy()->subWeeks(3)->startOfWeek(),
+                                $currentWeek->copy()->subWeeks(3)->endOfWeek(),
+                            ]),
+                            default => $query,
+                        };
+                    })
+                    ->indicateUsing(function (array $data): ?string {
+                        if (! $data['value']) {
+                            return null;
+                        }
+                        
+                        return match ($data['value']) {
+                            'current' => 'Semana Actual',
+                            'week_1' => 'Hace 1 semana',
+                            'week_2' => 'Hace 2 semanas',
+                            'week_3' => 'Hace 3 semanas',
+                            default => null,
+                        };
+                    }),
+                Tables\Filters\SelectFilter::make('created_month')
+                    ->label('Mes de Creación')
+                    ->options(function() {
+                        $options = [];
+                        $currentMonth = Carbon::now();
+                        
+                        // Current month
+                        $options["current"] = "Mes Actual (" . $currentMonth->format('F Y') . ")";
+                        
+                        // Past 6 months
+                        for ($i = 1; $i <= 6; $i++) {
+                            $monthDate = $currentMonth->copy()->subMonths($i);
+                            $options["month_{$i}"] = $monthDate->format('F Y');
+                        }
+                        
+                        return $options;
+                    })
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query;
+                        }
+                        
+                        $currentMonth = Carbon::now();
+                        
+                        return match ($data['value']) {
+                            'current' => $query->whereMonth('created_at', $currentMonth->month)
+                                              ->whereYear('created_at', $currentMonth->year),
+                            'month_1' => $query->whereMonth('created_at', $currentMonth->copy()->subMonth()->month)
+                                              ->whereYear('created_at', $currentMonth->copy()->subMonth()->year),
+                            'month_2' => $query->whereMonth('created_at', $currentMonth->copy()->subMonths(2)->month)
+                                              ->whereYear('created_at', $currentMonth->copy()->subMonths(2)->year),
+                            'month_3' => $query->whereMonth('created_at', $currentMonth->copy()->subMonths(3)->month)
+                                              ->whereYear('created_at', $currentMonth->copy()->subMonths(3)->year),
+                            'month_4' => $query->whereMonth('created_at', $currentMonth->copy()->subMonths(4)->month)
+                                              ->whereYear('created_at', $currentMonth->copy()->subMonths(4)->year),
+                            'month_5' => $query->whereMonth('created_at', $currentMonth->copy()->subMonths(5)->month)
+                                              ->whereYear('created_at', $currentMonth->copy()->subMonths(5)->year),
+                            'month_6' => $query->whereMonth('created_at', $currentMonth->copy()->subMonths(6)->month)
+                                              ->whereYear('created_at', $currentMonth->copy()->subMonths(6)->year),
+                            default => $query,
+                        };
+                    }),
+               
+            ], layout: FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     // Tables\Actions\ViewAction::make()

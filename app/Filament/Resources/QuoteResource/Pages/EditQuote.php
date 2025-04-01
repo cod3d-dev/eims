@@ -51,6 +51,7 @@ class EditQuote extends EditRecord
             }
         }
 
+        $data['state_province'] = $data['contact_information']['state'];
 
         // Remove the separate applicant fields as they're not part of the Quote model
 

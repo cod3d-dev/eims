@@ -7,6 +7,7 @@ use App\Casts\ApplicantCollectionCast;
 use App\Enums\DocumentStatus;
 use App\Enums\QuoteStatus;
 use App\Enums\PolicyType;
+use App\Enums\UsState;
 use App\ValueObjects\ApplicantCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -36,6 +37,7 @@ class Quote extends Model
         'end_date' => 'date',
         'valid_until' => 'date',
         'policy_type' => PolicyType::class,
+        'state_province' => UsState::class,
     ];
 
     public function contact(): BelongsTo

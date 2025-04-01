@@ -24,6 +24,7 @@ return new class extends Migration
             $table->decimal('premium_amount', 10, 2)->nullable();
             $table->decimal('coverage_amount', 12, 2)->nullable();
             $table->integer('year')->nullable();
+            $table->string('state_province')->nullable();
 
             // Applicants Information
             $table->json('main_applicant')->nullable(); // Will store the main applicant

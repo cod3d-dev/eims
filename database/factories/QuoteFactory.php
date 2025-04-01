@@ -13,6 +13,7 @@ use App\ValueObjects\Applicant;
 use App\ValueObjects\ApplicantCollection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Enums\UsState;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Quote>
@@ -44,7 +45,7 @@ class QuoteFactory extends Factory
         $agent = Agent::inRandomOrder()->first();
 
         // Generate 0-3 additional applicants
-        $additionalApplicantsCount = $this->faker->numberBetween(0, 3);
+        $additionalApplicantsCount = $this->faker->numberBetween(0, 4);
         $totalFamilyMembers = $additionalApplicantsCount + 1; // Main applicant + additional applicants
 
         // Create main applicant based on contact data
@@ -61,17 +62,44 @@ class QuoteFactory extends Factory
         // Generate contact information
         $contactInformation = $this->generateContactInformation($contact);
 
+        // Created date according to year
+        $year = Carbon::now()->subYears(rand(0, 1))->year;
+        
+        // If it's the current year, make sure the date is before today
+        if ($year === Carbon::now()->year) {
+            $month = rand(1, Carbon::now()->month);
+            $maxDay = $month === Carbon::now()->month ? Carbon::now()->day - 1 : 28;
+            $day = $maxDay > 0 ? rand(1, $maxDay) : 1;
+        } else {
+            $month = rand(1, 12);
+            $day = rand(1, 28);
+        }
+        
+        $createdDate = Carbon::create($year, $month, $day, 0, 0, 0);
+        
+        $status = $this->faker->randomElement(QuoteStatus::cases());
+
+        if (in_array($status->value, [
+            QuoteStatus::Rejected->value,
+            QuoteStatus::Converted->value,
+            QuoteStatus::Sent->value,
+            QuoteStatus::Accepted->value
+        ])) {
+            $updatedDate = $createdDate->copy()->addDays(rand(3, 45));
+        } else {
+            $updatedDate = $createdDate->copy();
+        }
+
         return [
+            'created_at' => $createdDate,
             'contact_id' => $contact->id,
             'contact_information' => $contactInformation,
             'user_id' => $user->id,
             'policy_id' => null,
-            'insurance_company_id' => $insuranceCompany?->id,
             'agent_id' => $agent?->id,
             'policy_type' => $this->faker->randomElement(PolicyType::cases())->value,
-            'premium_amount' => $this->faker->randomFloat(2, 50, 1000),
-            'coverage_amount' => $this->faker->randomFloat(2, 10000, 1000000),
-            'year' => Carbon::now()->year,
+            'year' => Carbon::now()->subYears(rand(0, 1))->year,
+            'state_province' => $contactInformation['state'] ?? null,
 
             // Applicants Information
             'main_applicant' => $mainApplicant,
@@ -85,10 +113,8 @@ class QuoteFactory extends Factory
             'prescription_drugs' => $this->generatePrescriptionDrugs(),
 
             // Quote Status and Dates
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'valid_until' => $validUntil,
-            'status' => $this->faker->randomElement(QuoteStatus::cases()),
+            'status' => $status->value,
+            'updated_at' => $updatedDate,
             'notes' => $this->faker->optional()->paragraph(),
         ];
     }
@@ -111,6 +137,9 @@ class QuoteFactory extends Factory
             'is_pregnant' => $contact->is_pregnant ?? $this->faker->boolean(10),
             'is_eligible_for_coverage' => $contact->is_eligible_for_coverage ?? $this->faker->boolean(90),
             'country_of_birth' => $contact->country_of_birth,
+            'state' => $contact->state_province,
+            'city' => $contact->city,
+            'zip_code' => $contact->zip_code,
             'civil_status' => $contact->marital_status,
             'phone1' => $contact->phone,
             'email_address' => $contact->email_address,
@@ -147,7 +176,7 @@ class QuoteFactory extends Factory
             'yearly_income' => $this->calculateTotalIncome($contact),
             'is_self_employed' => $this->faker->boolean(30),
             'self_employed_profession' => $this->faker->optional()->jobTitle(),
-            'income_per_hour' => $this->faker->optional()->randomFloat(2, 15, 100),
+            'income_per_hour' => $this->faker->optional()->randomFloat(2, 12, 40),
             'hours_per_week' => $this->faker->optional()->numberBetween(10, 40),
             'income_per_extra_hour' => $this->faker->optional()->randomFloat(2, 20, 150),
             'extra_hours_per_week' => $this->faker->optional()->numberBetween(0, 20),
@@ -232,12 +261,12 @@ class QuoteFactory extends Factory
                 'yearly_income' => $age >= 18 ? $this->faker->optional(0.7)->randomFloat(2, 20000, 150000) : null,
                 'is_self_employed' => $age >= 18 ? $this->faker->boolean(30) : false,
                 'self_employed_profession' => $age >= 18 && $this->faker->boolean(30) ? $this->faker->jobTitle() : null,
-                'income_per_hour' => $age >= 18 ? $this->faker->optional(0.5)->randomFloat(2, 15, 100) : null,
-                'hours_per_week' => $age >= 18 ? $this->faker->optional(0.5)->numberBetween(10, 40) : null,
-                'income_per_extra_hour' => $age >= 18 ? $this->faker->optional(0.3)->randomFloat(2, 20, 150) : null,
-                'extra_hours_per_week' => $age >= 18 ? $this->faker->optional(0.3)->numberBetween(0, 20) : null,
-                'weeks_per_year' => $age >= 18 ? $this->faker->optional(0.5)->numberBetween(40, 52) : null,
-                'self_employed_yearly_income' => $age >= 18 ? $this->faker->optional(0.3)->randomFloat(2, 20000, 150000) : null,
+                'income_per_hour' => $age >= 18 ? $this->faker->randomFloat(2, 15, 100) : null,
+                'hours_per_week' => $age >= 18 ? $this->faker->numberBetween(10, 40) : null,
+                'income_per_extra_hour' => $age >= 18 ? $this->faker->randomFloat(2, 20, 150) : null,
+                'extra_hours_per_week' => $age >= 18 ? $this->faker->numberBetween(0, 20) : null,
+                'weeks_per_year' => $age >= 18 ? $this->faker->numberBetween(40, 52) : null,
+                'self_employed_yearly_income' => $age >= 18 ? $this->faker->randomFloat(2, 10000, 150000) : null,
                 'age' => $age,
             ];
         }
@@ -256,6 +285,7 @@ class QuoteFactory extends Factory
             'phone' => $contact->phone,
             'phone2' => $contact->phone2,
             'whatsapp' => $contact->whatsapp,
+            'state' => $contact->state_province,
             'address' => [
                 'line1' => $contact->address_line_1,
                 'line2' => $contact->address_line_2,

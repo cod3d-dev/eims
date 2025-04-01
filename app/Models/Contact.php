@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Enums\Gender;
 use App\Enums\MaritialStatus;
+use App\Enums\UsState;
 
 class Contact extends Model
 {
@@ -31,6 +32,7 @@ class Contact extends Model
         'driver_license_expiration_date' => 'date',
         'weight' => 'decimal:2',
         'height' => 'decimal:2',
+        'state_province' => UsState::class,
         'annual_income_1' => 'decimal:2',
         'annual_income_2' => 'decimal:2',
         'annual_income_3' => 'decimal:2',

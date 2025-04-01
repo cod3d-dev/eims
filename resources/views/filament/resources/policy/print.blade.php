@@ -161,7 +161,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-500">Estado</p>
-                                <p class="mt-1">{{ App\Enums\UsState::tryFrom($record->contact->state_province)?->getLabel() ?? $record->contact->state_province }}</p>
+                                <p class="mt-1">{{ $record->contact->state_province->getLabel() }}</p>
                             </div>
                         </div>
                     </div>

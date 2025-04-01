@@ -321,7 +321,15 @@ class PolicyResource extends Resource
                         $customers = $state;
 
                         foreach ($record->additional_applicants as $applicant) {
-                            $customers .= '<br><span class="text-gray-500 text-xs">' . $applicant->first_name . ' ' . $applicant->middle_name . ' ' . $applicant->last_name . ' ' . $applicant->second_last_name . '</span>';
+                            $medicaidBadge = '';
+                            if (isset($applicant->medicaid_client) && $applicant->medicaid_client) {
+                                $medicaidBadge = '<span style="display: inline-block; background-color: #60a5fa; color: white; border-radius: 0.2rem; padding: 0rem 0.2rem; font-size: 0.75rem; font-weight: 500; margin-left: 15px;">Medicaid</span>';
+                            }
+                            
+                            $customers .= '<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1px;">
+                                <span style="color: #6b7280; font-size: 0.75rem; max-width: 70%;">' . $applicant->first_name . ' ' . $applicant->middle_name . ' ' . $applicant->last_name . ' ' . $applicant->second_last_name . '</span>
+                                ' . $medicaidBadge . '
+                            </div>';
                         }
 
                         return $customers;
@@ -470,6 +478,9 @@ class PolicyResource extends Resource
                    ->searchable()
                    ->preload(),
                Tables\Filters\SelectFilter::make('policy_type')
+                   ->options(PolicyType::class)
+                   ->label('Tipo de Poliza'),
+                Tables\Filters\SelectFilter::make('policy_type')
                    ->options(PolicyType::class)
                    ->label('Tipo de Poliza'),
             ], layout: FiltersLayout::AboveContent)

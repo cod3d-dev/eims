@@ -68,6 +68,7 @@ class CreateQuote extends CreateRecord
         // Ensure we have a contact_id for the quote
 
         $data['contact_id'] = $contact->id;
+        $data['state_province'] = $data['contact_information']['state'];
 
 
 

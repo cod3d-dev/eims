@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Contact;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use App\Enums\UsState;
 
 class ContactSeeder extends Seeder
 {
@@ -25,7 +26,7 @@ class ContactSeeder extends Seeder
                 'email_address' => 'glicel0310@gmail.com',
                 'phone' => '+15025996379',
                 'date_of_birth' => '1965-08-06',
-                'state_province' => 'Kentucky',
+                'state_province' => UsState::KENTUCKY->value,
                 'ssn' => '040-87-8784',
                 'zip_code' => '40218',
                 'city' => 'Louisville',
@@ -43,7 +44,7 @@ class ContactSeeder extends Seeder
                 'email_address' => 'escobarcv@icloud.com',
                 'phone' => '+8593822736',
                 'date_of_birth' => '1985-08-29',
-                'state_province' => 'Kentucky',
+                'state_province' => UsState::KENTUCKY->value,
                 'ssn' => '771-15-2553',
                 'zip_code' => '40517',
                 'city' => 'Lexington',

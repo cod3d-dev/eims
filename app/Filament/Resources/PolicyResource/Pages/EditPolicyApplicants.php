@@ -55,9 +55,9 @@ class EditPolicyApplicants extends EditRecord
                                                 Forms\Components\Toggle::make('is_pregnant')
                                                     ->inline(false)
                                                     ->label('¿Embarazada?'),
-                                                Forms\Components\Toggle::make('is_eligible_for_coverage')
+                                                Forms\Components\Toggle::make('medicaid_client')
                                                     ->inline(false)
-                                                    ->label('¿Elegible?'),
+                                                    ->label('¿Medicaid?'),
                                                 ])
                                             ->columns(7)
                                             ->columnSpanFull(),
