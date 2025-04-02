@@ -122,10 +122,10 @@ class ContactFactory extends Factory
             // Physical Address
             'address_line_1' => $this->faker->optional()->streetAddress(),
             'address_line_2' => $this->faker->optional(0.3)->secondaryAddress(),
-            'city' => $this->faker->optional()->city(),
+            'city' => $this->faker->city(),
             'state_province' => $this->faker->randomElement(UsState::class)->value,
-            'zip_code' => $this->faker->optional()->postcode(),
-            'county' => $this->faker->optional()->city(),
+            'zip_code' => $this->faker->postcode(),
+            'county' => $this->faker->city(),
 
             // Mailing Address
             'is_same_as_physical' => $isPhysicalAddressSameAsMailing,

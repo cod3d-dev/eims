@@ -795,10 +795,33 @@ class QuoteResource extends Resource
                     ->label('Agente')
                     ->sortable()
                     ->searchable(),
+                    // Tables\Columns\TextColumn::make('contact.full_name')
+                    // ->label('Cliente')
+                    // ->searchable(query: function (Builder $query, string $search): Builder {
+                    //     return $query->where(function (Builder $query) use ($search): Builder {
+                    //         // Search in contact fields
+                    //         $query->whereHas('contact', function (Builder $query) use ($search): Builder {
+                    //             return $query->where('first_name', 'like', "%{$search}%")
+                    //                 ->orWhere('middle_name', 'like', "%{$search}%")
+                    //                 ->orWhere('last_name', 'like', "%{$search}%")
+                    //                 ->orWhere('second_last_name', 'like', "%{$search}%");
+                    //         });
+                    //         return $query;
+                    //     });
+                    // })
+                    // ->sortable(query: function (Builder $query, string $direction): Builder {
+                    //     return $query
+                    //         ->join('contacts', 'quotes.contact_id', '=', 'contacts.id')
+                    //         ->orderBy('contacts.last_name', $direction)
+                    //         ->orderBy('contacts.first_name', $direction)
+                    //         ->select('quotes.*');
+                    // })
+                    // ->description(fn($record) => 'Applicantes: ' . $record->total_applicants),
                 Tables\Columns\TextColumn::make('contact.full_name')
                     ->label('Cliente')
                     ->sortable(['first_name', 'last_name'])
-                    ->searchable(['first_name', 'last_name', 'middle_name', 'second_last_name']),
+                    ->searchable(['first_name', 'last_name', 'middle_name', 'second_last_name'])
+                    ->description(fn($record) => 'Applicantes: ' . $record->total_applicants),
                 Tables\Columns\TextColumn::make('contact_information.state')
                     ->label('Estado')
                     ->searchable()

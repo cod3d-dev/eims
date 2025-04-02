@@ -14,6 +14,7 @@ use App\ValueObjects\ApplicantCollection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Enums\UsState;
+use App\Enums\FamilyRelationship;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Quote>
@@ -110,7 +111,7 @@ class QuoteFactory extends Factory
             // Additional Information
             'estimated_household_income' => $this->faker->randomFloat(2, 20000, 150000),
             'preferred_doctor' => $this->faker->optional()->name(),
-            'prescription_drugs' => $this->generatePrescriptionDrugs(),
+            // 'prescription_drugs' => $this->generatePrescriptionDrugs(),
 
             // Quote Status and Dates
             'status' => $status->value,
@@ -124,7 +125,7 @@ class QuoteFactory extends Factory
      */
     private function createMainApplicantFromContact(Contact $contact): array
     {
-        return [
+        $applicant = [
             'gender' => $contact->gender ?? $this->faker->randomElement(['male', 'female']),
             'date_of_birth' => $contact->date_of_birth ?? $this->faker->date('Y-m-d', '-60 years'),
             'relationship' => 'self',
@@ -173,17 +174,42 @@ class QuoteFactory extends Factory
             'employer_3_role' => $contact->position_3,
             'employer_3_phone' => $contact->employer_phone_3,
             'employer_3_income' => $contact->annual_income_3,
-            'yearly_income' => $this->calculateTotalIncome($contact),
-            'is_self_employed' => $this->faker->boolean(30),
-            'self_employed_profession' => $this->faker->optional()->jobTitle(),
-            'income_per_hour' => $this->faker->optional()->randomFloat(2, 12, 40),
-            'hours_per_week' => $this->faker->optional()->numberBetween(10, 40),
-            'income_per_extra_hour' => $this->faker->optional()->randomFloat(2, 20, 150),
-            'extra_hours_per_week' => $this->faker->optional()->numberBetween(0, 20),
-            'weeks_per_year' => $this->faker->optional()->numberBetween(40, 52),
-            'self_employed_yearly_income' => $this->faker->optional()->randomFloat(2, 20000, 150000),
+            'is_self_employed' => $isSelfEmployed = $this->faker->boolean(30),
+            'self_employed_profession' => $isSelfEmployed ? $this->faker->jobTitle() : null,
+            'self_employed_yearly_income' => null,
+            'income_per_hour' => null,
+            'hours_per_week' => null,
+            'income_per_extra_hour' => null,
+            'extra_hours_per_week' => null,
+            'weeks_per_year' => null,
+            'yearly_income' => null,
             'age' => Carbon::parse($contact->date_of_birth)->age ?? $this->faker->numberBetween(18, 80),
         ];
+        
+        // Set employment values based on employment type
+        if ($isSelfEmployed) {
+            $applicant['self_employed_yearly_income'] = $this->faker->randomFloat(2, 20000, 60000);
+            $applicant['yearly_income'] = $applicant['self_employed_yearly_income'];
+        } else {
+            $applicant['income_per_hour'] = $this->faker->randomFloat(2, 10, 30);
+            $applicant['hours_per_week'] = $this->faker->numberBetween(10, 40);
+            $applicant['weeks_per_year'] = $this->faker->numberBetween(40, 52);
+            
+            // Calculate base yearly income
+            $yearlyIncome = $applicant['income_per_hour'] * $applicant['hours_per_week'] * $applicant['weeks_per_year'];
+            
+            // Add extra hours if applicable (60% chance)
+            $hasExtraHours = $this->faker->boolean(60);
+            if ($hasExtraHours) {
+                $applicant['income_per_extra_hour'] = $this->faker->randomFloat(2, $applicant['income_per_hour'], $applicant['income_per_hour'] * 2);
+                $applicant['extra_hours_per_week'] = $this->faker->numberBetween(1, 10);
+                $yearlyIncome += $applicant['income_per_extra_hour'] * $applicant['extra_hours_per_week'] * $applicant['weeks_per_year'];
+            }
+            
+            $applicant['yearly_income'] = $yearlyIncome;
+        }
+        
+        return $applicant;
     }
 
     /**
@@ -199,7 +225,7 @@ class QuoteFactory extends Factory
             $gender = $this->faker->randomElement(['male', 'female']);
             $firstName = $gender === 'male' ? $this->faker->firstNameMale() : $this->faker->firstNameFemale();
             $lastName = $this->faker->lastName();
-            $relationship = $this->faker->randomElement($relationships);
+            $relationship = $this->faker->randomElement(\App\Enums\FamilyRelationship::class);
 
             // Adjust age based on relationship
             $age = match($relationship) {
@@ -231,7 +257,7 @@ class QuoteFactory extends Factory
                 'height' => $this->faker->randomFloat(2, 3, 7),
                 'weight' => $this->faker->randomFloat(2, 30, 300),
                 'preferred_doctor' => $this->faker->optional(0.3)->name(),
-                'prescription_drugs' => $this->faker->boolean(30) ? $this->generatePrescriptionDrugs(1, 2) : [],
+                // 'prescription_drugs' => $this->faker->boolean(30) ? $this->generatePrescriptionDrugs(1, 2) : [],
                 'member_ssn' => $this->faker->optional(0.7)->regexify('[0-9]{3}-[0-9]{2}-[0-9]{4}'),
                 'member_ssn_date' => $this->faker->optional(0.5)->date(),
                 'member_passport' => $this->faker->optional(0.3)->regexify('[A-Z][0-9]{8}'),
@@ -258,17 +284,48 @@ class QuoteFactory extends Factory
                 'employer_3_role' => $age >= 18 ? $this->faker->optional(0.1)->jobTitle() : null,
                 'employer_3_phone' => $age >= 18 ? $this->faker->optional(0.1)->phoneNumber() : null,
                 'employer_3_income' => $age >= 18 ? $this->faker->optional(0.1)->randomFloat(2, 20000, 150000) : null,
-                'yearly_income' => $age >= 18 ? $this->faker->optional(0.7)->randomFloat(2, 20000, 150000) : null,
-                'is_self_employed' => $age >= 18 ? $this->faker->boolean(30) : false,
-                'self_employed_profession' => $age >= 18 && $this->faker->boolean(30) ? $this->faker->jobTitle() : null,
-                'income_per_hour' => $age >= 18 ? $this->faker->randomFloat(2, 15, 100) : null,
-                'hours_per_week' => $age >= 18 ? $this->faker->numberBetween(10, 40) : null,
-                'income_per_extra_hour' => $age >= 18 ? $this->faker->randomFloat(2, 20, 150) : null,
-                'extra_hours_per_week' => $age >= 18 ? $this->faker->numberBetween(0, 20) : null,
-                'weeks_per_year' => $age >= 18 ? $this->faker->numberBetween(40, 52) : null,
-                'self_employed_yearly_income' => $age >= 18 ? $this->faker->randomFloat(2, 10000, 150000) : null,
                 'age' => $age,
+                'is_self_employed' => null,
+                'self_employed_profession' => null,
+                'self_employed_yearly_income' => null,
+                'income_per_hour' => null,
+                'hours_per_week' => null,
+                'income_per_extra_hour' => null,
+                'extra_hours_per_week' => null,
+                'weeks_per_year' => null,
+                'yearly_income' => null,
             ];
+            
+            // Only add income for applicants over 12 years old, with 40% chance
+            $hasIncome = $age > 12 && $this->faker->boolean(40);
+            
+            if ($hasIncome) {
+                $isSelfEmployed = $this->faker->boolean(30);
+                $applicants[$i]['is_self_employed'] = $isSelfEmployed;
+                
+                if ($isSelfEmployed) {
+                    $applicants[$i]['self_employed_profession'] = $this->faker->jobTitle();
+                    $applicants[$i]['self_employed_yearly_income'] = $this->faker->randomFloat(2, 20000, 60000);
+                    $applicants[$i]['yearly_income'] = $applicants[$i]['self_employed_yearly_income'];
+                } else {
+                    $applicants[$i]['income_per_hour'] = $this->faker->randomFloat(2, 10, 30);
+                    $applicants[$i]['hours_per_week'] = $this->faker->numberBetween(10, 40);
+                    $applicants[$i]['weeks_per_year'] = $this->faker->numberBetween(40, 52);
+                    
+                    // Calculate base yearly income
+                    $yearlyIncome = $applicants[$i]['income_per_hour'] * $applicants[$i]['hours_per_week'] * $applicants[$i]['weeks_per_year'];
+                    
+                    // Add extra hours if applicable (60% chance)
+                    $hasExtraHours = $this->faker->boolean(60);
+                    if ($hasExtraHours) {
+                        $applicants[$i]['income_per_extra_hour'] = $this->faker->randomFloat(2, $applicants[$i]['income_per_hour'], $applicants[$i]['income_per_hour'] * 2);
+                        $applicants[$i]['extra_hours_per_week'] = $this->faker->numberBetween(1, 10);
+                        $yearlyIncome += $applicants[$i]['income_per_extra_hour'] * $applicants[$i]['extra_hours_per_week'] * $applicants[$i]['weeks_per_year'];
+                    }
+                    
+                    $applicants[$i]['yearly_income'] = $yearlyIncome;
+                }
+            }
         }
 
         return $applicants;
@@ -280,27 +337,20 @@ class QuoteFactory extends Factory
     private function generateContactInformation(Contact $contact): array
     {
         return [
-            'name' => trim($contact->first_name . ' ' . $contact->last_name),
+            'first_name' => $contact->first_name,
+            'last_name' => $contact->last_name,
+            'middle_name' => $contact->middle_name,
+            'second_last_name' => $contact->second_last_name,
+            'date_of_birth' => $contact->date_of_birth,
+            'gender' => $contact->gender,
             'email' => $contact->email_address,
             'phone' => $contact->phone,
             'phone2' => $contact->phone2,
             'whatsapp' => $contact->whatsapp,
             'state' => $contact->state_province,
-            'address' => [
-                'line1' => $contact->address_line_1,
-                'line2' => $contact->address_line_2,
-                'city' => $contact->city,
-                'state' => $contact->state_province,
-                'zip' => $contact->zip_code,
-                'county' => $contact->county,
-            ],
-            'mailing_address' => $contact->is_same_as_physical ? null : [
-                'line1' => $contact->mailing_address_line_1,
-                'line2' => $contact->mailing_address_line_2,
-                'city' => $contact->mailing_city,
-                'state' => $contact->mailing_state_province,
-                'zip' => $contact->mailing_zip_code,
-            ],
+            'zip_code' => $contact->zip_code,
+            'city' => $contact->city,
+            'county' => $contact->county,
             'preferred_language' => $contact->preferred_language ?? 'spanish',
             'preferred_contact_method' => $contact->preferred_contact_method,
             'preferred_contact_time' => $contact->preferred_contact_time,
