@@ -87,8 +87,21 @@ class PolicyFactory extends Factory
             $lifeInsurance = $this->generateLifeInsuranceData($mainApplicant);
         }
 
+        if ($year === Carbon::now()->year) {
+            $month = rand(1, Carbon::now()->month);
+            $maxDay = $month === Carbon::now()->month ? Carbon::now()->day - 1 : 28;
+            $day = $maxDay > 0 ? rand(1, $maxDay) : 1;
+        } else {
+            $month = rand(1, 12);
+            $day = rand(1, 28);
+        }
+        
+        $createdDate = Carbon::create($year, $month, $day, 0, 0, 0);
+
+
         return [
             // Basic Information
+            'created_at' => $createdDate,
             'contact_id' => $contact->id,
             'user_id' => $user->id,
             'insurance_company_id' => $insuranceCompany->id,
@@ -177,7 +190,7 @@ class PolicyFactory extends Factory
             'renewed_from_policy_id' => $isRenewal ? null : null, // Would need to set this manually
             'renewed_to_policy_id' => null, // Would need to set this manually
             'renewed_by' => $isRenewal ? $user->id : null,
-            'renewed_at' => $isRenewal ? $this->faker->dateTimeBetween('-30 days', 'now') : null,
+            // 'renewed_at' => $isRenewal ? $this->faker->dateTimeBetween('-30 days', 'now') : null,
             'renewal_status' => $isRenewal ? $this->faker->randomElement(RenewalStatus::cases()) : null,
             'renewal_notes' => $isRenewal ? $this->faker->optional(0.7)->paragraph() : null,
 
