@@ -286,6 +286,12 @@ class PolicyResource extends Resource
         return $table
             ->columns([
                 // Insurance Account name
+                Tables\Columns\TextColumn::make('id')
+                    // format getting the first letter of each word in the name in uppercase
+                    ->label('#')
+                    ->badge()
+                    // ->tooltip(fn(string $state): string => $state)
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('agent.name')
                     // format getting the first letter of each word in the name in uppercase
                     ->formatStateUsing(fn(string $state): string => Str::acronym($state))
