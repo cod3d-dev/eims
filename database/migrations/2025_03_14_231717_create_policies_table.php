@@ -53,6 +53,7 @@ return new class extends Migration
             $table->json('additional_applicants')->nullable();
             $table->integer('total_family_members')->default(1)->nullable();
             $table->integer('total_applicants')->default(1)->nullable();
+            $table->integer('total_applicants_with_medicaid')->default(0)->nullable();
 
             // Additional Information
             $table->decimal('estimated_household_income', 12, 2)->nullable();

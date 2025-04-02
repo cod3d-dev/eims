@@ -9,6 +9,7 @@ use App\Enums\PolicyStatus;
 use App\Enums\PolicyType;
 use App\Enums\RenewalStatus;
 use App\Enums\UsState;
+use App\Models\KynectFPL;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -201,6 +202,39 @@ class Policy extends Model
         });
     }
 
+    /**
+     * Check if this policy meets the KynectFPL requirement
+     * 
+     * @return bool Whether the policy meets the KynectFPL requirement
+     */
+    public function getMeetsKynectFPLRequirementAttribute(): bool
+    {
+        // Get monthly income from main applicant
+        $annualIncome = null;
+        
+        if (isset($this->estimated_household_income)) {
+            // Convert estimated_household_income to float
+            $annualIncome = (float) $this->estimated_household_income;
+        } else {
+            // Can't determine income
+            return false;
+        }
+        // Get the household size
+        $householdSize = $this->total_family_members;
+        
+        // Get the threshold for this household size
+        $threshold = KynectFPL::getCurrentThreshold($householdSize);
+        
+        if ($threshold === null) {
+            return false;
+        }
 
+        // Check if the monthly income is less than or equal to the threshold
+        return $annualIncome >= $threshold*12;
+    }
 
+    public function getTotalMembersAttribute(): int
+    {
+        return $this->total_family_members;
+    }
 }

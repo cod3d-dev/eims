@@ -60,6 +60,14 @@ class PolicyFactory extends Factory
         // Create additional applicants
         $additionalApplicants = $this->createAdditionalApplicants($additionalApplicantsCount);
 
+        // Count applicants with medicaid
+        $totalApplicantsWithMedicaid = ($mainApplicant['medicaid_client'] ?? false) ? 1 : 0;
+        foreach ($additionalApplicants as $applicant) {
+            if ($applicant['medicaid_client'] ?? false) {
+                $totalApplicantsWithMedicaid++;
+            }
+        }
+
         // Generate random dates
         $effectiveDate = $this->faker->dateTimeBetween('-1 month', '+1 month');
         $expirationDate = (clone $effectiveDate)->modify('+1 year');
@@ -122,9 +130,11 @@ class PolicyFactory extends Factory
             'additional_applicants' => $additionalApplicants,
             'total_family_members' => $totalFamilyMembers,
             'total_applicants' => $totalFamilyMembers,
-
-            // Additional Information
-            'estimated_household_income' => $this->faker->randomFloat(2, 30000, 150000),
+            'total_applicants_with_medicaid' => $totalApplicantsWithMedicaid,
+            
+            // Calculate total household income from all applicants
+            'estimated_household_income' => $this->calculateTotalHouseholdIncome($mainApplicant, $additionalApplicants),
+            
             'preferred_doctor' => $this->faker->optional(0.5)->name(),
             'prescription_drugs' => $prescriptionDrugs,
             'contact_information' => $contactInformation,
@@ -182,7 +192,7 @@ class PolicyFactory extends Factory
      */
     private function createMainApplicantFromContact(Contact $contact): array
     {
-        return [
+        $applicant = [
             'gender' => $contact->gender ?? $this->faker->randomElement(['male', 'female']),
             'date_of_birth' => $contact->date_of_birth ?? $this->faker->date('Y-m-d', '-60 years'),
             'relationship' => 'self',
@@ -229,17 +239,42 @@ class PolicyFactory extends Factory
             'employer_3_role' => $contact->position_3,
             'employer_3_phone' => $contact->employer_phone_3,
             'employer_3_income' => $contact->annual_income_3,
-            'yearly_income' => $this->calculateTotalIncome($contact),
-            'is_self_employed' => $this->faker->boolean(30),
-            'self_employed_profession' => $this->faker->optional()->jobTitle(),
-            'income_per_hour' => $this->faker->optional()->randomFloat(2, 15, 100),
-            'hours_per_week' => $this->faker->optional()->numberBetween(10, 40),
-            'income_per_extra_hour' => $this->faker->optional()->randomFloat(2, 20, 150),
-            'extra_hours_per_week' => $this->faker->optional()->numberBetween(0, 20),
-            'weeks_per_year' => $this->faker->optional()->numberBetween(40, 52),
-            'self_employed_yearly_income' => $this->faker->optional()->randomFloat(2, 20000, 150000),
+            'is_self_employed' => $isSelfEmployed = $this->faker->boolean(30),
+            'self_employed_profession' => $isSelfEmployed ? $this->faker->jobTitle() : null,
+            'self_employed_yearly_income' => null,
+            'income_per_hour' => null,
+            'hours_per_week' => null,
+            'income_per_extra_hour' => null,
+            'extra_hours_per_week' => null,
+            'weeks_per_year' => null,
+            'yearly_income' => null,
             'age' => Carbon::parse($contact->date_of_birth)->age ?? $this->faker->numberBetween(18, 80),
         ];
+        
+        // Set employment values based on employment type
+        if ($isSelfEmployed) {
+            $applicant['self_employed_yearly_income'] = $this->faker->randomFloat(2, 20000, 60000);
+            $applicant['yearly_income'] = $applicant['self_employed_yearly_income'];
+        } else {
+            $applicant['income_per_hour'] = $this->faker->randomFloat(2, 15, 100);
+            $applicant['hours_per_week'] = $this->faker->numberBetween(10, 40);
+            $applicant['weeks_per_year'] = $this->faker->numberBetween(40, 52);
+            
+            // Calculate base yearly income
+            $yearlyIncome = $applicant['income_per_hour'] * $applicant['hours_per_week'] * $applicant['weeks_per_year'];
+            
+            // Add extra hours if applicable (60% chance)
+            $hasExtraHours = $this->faker->boolean(60);
+            if ($hasExtraHours) {
+                $applicant['income_per_extra_hour'] = $this->faker->randomFloat(2, 20, 150);
+                $applicant['extra_hours_per_week'] = $this->faker->numberBetween(1, 20);
+                $yearlyIncome += $applicant['income_per_extra_hour'] * $applicant['extra_hours_per_week'] * $applicant['weeks_per_year'];
+            }
+            
+            $applicant['yearly_income'] = $yearlyIncome;
+        }
+        
+        return $applicant;
     }
 
     /**
@@ -280,6 +315,7 @@ class PolicyFactory extends Factory
                 'is_tobacco_user' => $this->faker->boolean(20),
                 'is_pregnant' => $gender === 'female' ? $this->faker->boolean(10) : false,
                 'is_eligible_for_coverage' => $this->faker->boolean(90),
+                'medicaid_client' => $this->faker->boolean(30),
                 'country_of_birth' => $this->faker->country(),
                 'civil_status' => $relationship === 'child' ? 'single' : $this->faker->randomElement(['single', 'married', 'divorced', 'widowed']),
                 'phone1' => $relationship === 'child' && $age < 18 ? null : $this->faker->phoneNumber(),
@@ -304,7 +340,47 @@ class PolicyFactory extends Factory
                 'member_inmigration_status' => $this->faker->optional(0.5)->randomElement(['citizen', 'permanent_resident', 'temporary_resident', 'visa_holder']),
                 'member_inmigration_status_category' => $this->faker->optional(0.5)->randomElement(['A', 'B', 'C', 'D']),
                 'age' => $age,
+                'is_self_employed' => null,
+                'self_employed_profession' => null,
+                'self_employed_yearly_income' => null,
+                'income_per_hour' => null,
+                'hours_per_week' => null,
+                'income_per_extra_hour' => null,
+                'extra_hours_per_week' => null,
+                'weeks_per_year' => null,
+                'yearly_income' => null,
             ];
+            
+            // Only add income for applicants over 12 years old, with 40% chance
+            $hasIncome = $age > 12 && $this->faker->boolean(40);
+            
+            if ($hasIncome) {
+                $isSelfEmployed = $this->faker->boolean(30);
+                $applicants[$i]['is_self_employed'] = $isSelfEmployed;
+                
+                if ($isSelfEmployed) {
+                    $applicants[$i]['self_employed_profession'] = $this->faker->jobTitle();
+                    $applicants[$i]['self_employed_yearly_income'] = $this->faker->randomFloat(2, 20000, 60000);
+                    $applicants[$i]['yearly_income'] = $applicants[$i]['self_employed_yearly_income'];
+                } else {
+                    $applicants[$i]['income_per_hour'] = $this->faker->randomFloat(2, 15, 100);
+                    $applicants[$i]['hours_per_week'] = $this->faker->numberBetween(10, 40);
+                    $applicants[$i]['weeks_per_year'] = $this->faker->numberBetween(40, 52);
+                    
+                    // Calculate base yearly income
+                    $yearlyIncome = $applicants[$i]['income_per_hour'] * $applicants[$i]['hours_per_week'] * $applicants[$i]['weeks_per_year'];
+                    
+                    // Add extra hours if applicable (60% chance)
+                    $hasExtraHours = $this->faker->boolean(60);
+                    if ($hasExtraHours) {
+                        $applicants[$i]['income_per_extra_hour'] = $this->faker->randomFloat(2, 20, 150);
+                        $applicants[$i]['extra_hours_per_week'] = $this->faker->numberBetween(1, 20);
+                        $yearlyIncome += $applicants[$i]['income_per_extra_hour'] * $applicants[$i]['extra_hours_per_week'] * $applicants[$i]['weeks_per_year'];
+                    }
+                    
+                    $applicants[$i]['yearly_income'] = $yearlyIncome;
+                }
+            }
         }
 
         return $applicants;
@@ -380,30 +456,17 @@ class PolicyFactory extends Factory
     }
 
     /**
-     * Calculate total income from all sources
+     * Calculate total income from all applicants
      */
-    private function calculateTotalIncome(Contact $contact): float
+    private function calculateTotalHouseholdIncome(array $mainApplicant, array $additionalApplicants): float
     {
-        $total = 0;
+        $totalIncome = $mainApplicant['yearly_income'] ?? 0;
 
-        if ($contact->annual_income_1) {
-            $total += $contact->annual_income_1;
+        foreach ($additionalApplicants as $applicant) {
+            $totalIncome += $applicant['yearly_income'] ?? 0;
         }
 
-        if ($contact->annual_income_2) {
-            $total += $contact->annual_income_2;
-        }
-
-        if ($contact->annual_income_3) {
-            $total += $contact->annual_income_3;
-        }
-
-        // If no income is set, generate a random one
-        if ($total === 0) {
-            $total = $this->faker->randomFloat(2, 20000, 120000);
-        }
-
-        return $total;
+        return $totalIncome;
     }
 
     /**
@@ -486,7 +549,7 @@ class PolicyFactory extends Factory
         $motherDeathReason = $motherIsAlive ? null : $this->faker->randomElement(['Cáncer', 'Infarto', 'Accidente', 'Causas naturales']);
         
         $hasFamilyMemberWithDisease = $this->faker->boolean(40);
-        $familyMemberRelationship = $hasFamilyMemberWithDisease ? $this->faker->randomElement(['Hermano/a', 'Tío/a', 'Abuelo/a', 'Primo/a']) : null;
+        $familyMemberRelationship = $hasFamilyMemberWithDisease ? $this->faker->randomElement(\App\Enums\FamilyRelationship::cases()) : null;
         $familyMemberDiseaseDescription = $hasFamilyMemberWithDisease ? $this->faker->randomElement(['Cáncer', 'Diabetes', 'Enfermedad cardíaca', 'Alzheimer', 'Parkinson']) : null;
         
         // Generate employment information

@@ -29,9 +29,12 @@ class EditPolicyIncome extends EditRecord
                     ->extraInputAttributes(['class' => 'text-center'])
                     ->default(1)
                     ->live()
+                    ->afterStateHydrated(function (string $state, Forms\Set $set) {
+                        $kinectKPL = \App\Models\KynectFPL::getCurrentThreshold((int) $state);
+                        $set('kynect_fpl_threshold', number_format($kinectKPL * 12, 2, '.', ','));
+                    })
                     ->afterStateUpdated(function (string $state, Forms\Set $set) {
-                        $latestYear = \App\Models\KynectFPL::getLatestYear();
-                        $kinectKPL = \App\Models\KynectFPL::threshold($latestYear, (int) $state);
+                        $kinectKPL = \App\Models\KynectFPL::getCurrentThreshold((int) $state);
                         $set('kynect_fpl_threshold', number_format($kinectKPL * 12, 2, '.', ','));
                     }),
                 Forms\Components\TextInput::make('total_applicants')
@@ -43,7 +46,7 @@ class EditPolicyIncome extends EditRecord
                 Forms\Components\TextInput::make('estimated_household_income')
                     ->label('Ingreso Familiar Estimado')
                     ->prefix('$')
-                    ->disabled()
+                    ->readOnly()
                     ->extraInputAttributes(function (Forms\Get $get) {
                         $income = floatval(str_replace(',', '', $get('estimated_household_income') ?? 0));
                         $threshold = floatval(str_replace(',', '', $get('kynect_fpl_threshold') ?? 0));
@@ -64,15 +67,13 @@ class EditPolicyIncome extends EditRecord
                     ->prefix('$')
                     ->live()
                     ->formatStateUsing(function ($state, $get) {
-                        $memberCount = $get('../../total_family_members') ?? 1;
-                        $kinectKPL = floatval(\App\Models\KynectFPL::threshold(2024,
-                            $memberCount));
+                        $memberCount = $get('total_family_members') ?? 1;
+                        $kinectKPL = floatval(\App\Models\KynectFPL::getCurrentThreshold($memberCount));
                         return number_format($kinectKPL * 12, 2, '.', ',');
                     })
                     ->afterStateUpdated(function ($state, Forms\Set $set, $get) {
-                        $memberCount = $get('../../total_family_members') ?? 1;
-                        $kinectKPL = floatval(\App\Models\KynectFPL::threshold(2024,
-                            $memberCount));
+                        $memberCount = $get('total_family_members') ?? 1;
+                        $kinectKPL = floatval(\App\Models\KynectFPL::getCurrentThreshold($memberCount));
                         $set('kynect_fpl_threshold', $kinectKPL * 12);
                     }),
 

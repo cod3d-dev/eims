@@ -17,6 +17,7 @@ use App\Models\Policy;
 use App\Models\Quote;
 use App\Models\Contact;
 use Illuminate\Contracts\Support\Htmlable;
+use App\Filament\Resources\PolicyResource\Widgets\PolicyStats;
 //use App\Filament\Resources\PolicyResource\RelationManagers\IssuesRelationManager;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -89,6 +90,13 @@ class PolicyResource extends Resource
             'Estatus' => (string) (($record->initial_paid === true ? 'Pagado' : 'Sin Pagar') . ' / Documentos: ' . ($record->document_status->getLabel())),
             'Cliente Notificado' => ($record->client_notified === true ? 'Sí' : 'No') . ($record->contact->state_province == 'KY' ? ' / ACA: ' . ($record->aca === true ? 'Sí' : 'No') : ''),
 
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            PolicyStats::class,
         ];
     }
 
@@ -388,22 +396,13 @@ class PolicyResource extends Resource
                         ->label('Inicial')
                         ->sortable(),
                     Tables\Columns\IconColumn::make('aca')
-//                        ->boolean()
+                       ->boolean()
 //                        ->formatStateUsing(fn(Policy $record): bool => ($record->policy_us_state === 'KY' && $record->aca) ? true : false)
 //                        ->sortable(),
                         ->label('ACA'),
-//                        ->icon(function (Policy $record): string {
-////                            dd($record->policy_us_state);
-//                            if($record->policy_us_state->value === 'KY' && $record->insuranceCompany->name != 'CareSource' && $record->insuranceCompany->name != 'Anthem') {
-//                                if ($record->aca) {
-//                                    return 'heroicon-o-check-circle';
-//                                } else {
-//                                    return 'heroicon-o-x-circle';
-//                                }
-//                            } else {
-//                                return 'heroicon-o-minus';
-//                            }
-//                        }),
+                    Tables\Columns\IconColumn::make('meetsKynectFPLRequirement')
+                        ->boolean()
+                        ->label('FPL'),
                     Tables\Columns\TextColumn::make('document_status')
                         ->label('Documentos')
                         ->sortable()
@@ -434,16 +433,6 @@ class PolicyResource extends Resource
                 Tables\Columns\IconColumn::make('is_renewal')
                     ->label('Renovada')
                     ->boolean(),
-                // Tables\Columns\TextColumn::make('renewal_status')
-                //     ->label('Estado de Renovación')
-                //     ->badge()
-                //     ->formatStateUsing(fn (RenewalStatus $state): string => $state->label())
-                //     ->color(fn ($state): string => match ($state->value) {
-                //         RenewalStatus::PENDING->value => 'warning',
-                //         RenewalStatus::COMPLETED->value => 'success',
-                //         RenewalStatus::CANCELLED->value => 'danger',
-                //         default => 'gray',
-                //     }),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
@@ -480,9 +469,58 @@ class PolicyResource extends Resource
                Tables\Filters\SelectFilter::make('policy_type')
                    ->options(PolicyType::class)
                    ->label('Tipo de Poliza'),
-                Tables\Filters\SelectFilter::make('policy_type')
-                   ->options(PolicyType::class)
-                   ->label('Tipo de Poliza'),
+                Tables\Filters\Filter::make('meetsKynectFPLRequirement')
+                    ->label('Cumple FPL')
+                    ->form([
+                        Forms\Components\Select::make('meets_fpl')
+                            ->label('Cumple FPL')
+                            ->options([
+                                'yes' => 'Sí',
+                                'no' => 'No',
+                            ])
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (empty($data['meets_fpl'])) {
+                            return $query;
+                        }
+                        
+                        // Get the latest KynectFPL record
+                        $latestFPL = \App\Models\KynectFPL::latest()->first();
+                        
+                        if (!$latestFPL) {
+                            return $query;
+                        }
+                        
+                        // Get all policies with their family members
+                        $policies = $query->get(['id', 'total_family_members', 'estimated_household_income']);
+                        
+                        // Filter the policies based on FPL requirements
+                        $filteredIds = $policies->filter(function ($policy) use ($latestFPL, $data) {
+                            $householdSize = $policy->total_family_members;
+                            $annualIncome = (float) $policy->estimated_household_income;
+                            
+                            // Calculate threshold based on household size
+                            $threshold = null;
+                            if ($householdSize <= 8) {
+                                $memberField = "members_{$householdSize}";
+                                $threshold = $latestFPL->{$memberField} * 12;
+                            } else {
+                                $baseAmount = $latestFPL->members_8;
+                                $extraMembers = $householdSize - 8;
+                                $threshold = ($baseAmount + ($latestFPL->additional_member * $extraMembers)) * 12;
+                            }
+                            
+                            // Check if meets requirement based on selection
+                            if ($data['meets_fpl'] === 'yes') {
+                                return $annualIncome >= $threshold;
+                            } else {
+                                return $annualIncome < $threshold;
+                            }
+                        })->pluck('id')->toArray();
+                        
+                        // Return query with filtered IDs
+                        return $query->whereIn('id', $filteredIds);
+                    })
             ], layout: FiltersLayout::AboveContent)
             ->actions([
                 // Create a Action group with 3 actions

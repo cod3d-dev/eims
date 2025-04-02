@@ -23,6 +23,22 @@ class EditPolicyApplicants extends EditRecord
 
     protected static ?string $navigationIcon = 'carbon-pedestrian-family';
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if (isset($data['additional_applicants']) && is_array($data['additional_applicants'])) {
+            // Count applicants where medicaid_client is true
+            $medicaidCount = 0;
+            foreach ($data['additional_applicants'] as $applicant) {
+                if (isset($applicant['medicaid_client']) && $applicant['medicaid_client'] === true) {
+                    $medicaidCount++;
+                }
+            }
+            $data['total_applicants_with_medicaid'] = $medicaidCount;
+        }
+        
+        return $data;
+    }
+
     public  function form(Form $form): Form
     {
         return $form

@@ -81,6 +81,51 @@ class KynectFPL extends Model
     }
 
     /**
+     * Check if a policy meets the KynectFPL requirement
+     * 
+     * @param \App\Models\Policy|int $policyOrHouseholdSize The policy object or household size
+     * @param float|null $monthlyIncome Monthly income (only needed if first param is household size)
+     * @return bool Whether the policy meets the KynectFPL requirement
+     */
+    public static function meetsRequirement($policyOrHouseholdSize, ?float $monthlyIncome = null): bool
+    {
+        // If a Policy object is passed
+        if ($policyOrHouseholdSize instanceof \App\Models\Policy) {
+            $policy = $policyOrHouseholdSize;
+            $householdSize = $policy->total_family_members;
+            
+            // Get monthly income from main applicant
+            if (isset($policy->main_applicant->monthly_income)) {
+                $monthlyIncome = $policy->main_applicant->monthly_income;
+            } elseif (isset($policy->main_applicant->yearly_income)) {
+                // Convert yearly to monthly if monthly not available
+                $monthlyIncome = $policy->main_applicant->yearly_income / 12;
+            } else {
+                // Can't determine income
+                return false;
+            }
+        } else {
+            // If household size is passed directly
+            $householdSize = (int) $policyOrHouseholdSize;
+            
+            // Monthly income must be provided
+            if ($monthlyIncome === null) {
+                return false;
+            }
+        }
+        
+        // Get the threshold for this household size
+        $threshold = self::getCurrentThreshold($householdSize);
+        
+        if ($threshold === null) {
+            return false;
+        }
+        
+        // Check if the monthly income is less than or equal to the threshold
+        return $monthlyIncome <= $threshold;
+    }
+
+    /**
      * Get both monthly and yearly thresholds for a household size
      */
     public static function getThresholds(int $householdSize, ?int $year = null): ?array

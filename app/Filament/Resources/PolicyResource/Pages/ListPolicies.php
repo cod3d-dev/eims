@@ -8,10 +8,18 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Pages\ListRecords\Tab;
 use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Pages\Concerns\ExposesTableToWidgets;
 
 class ListPolicies extends ListRecords
 {
     protected static string $resource = PolicyResource::class;
+
+    use ExposesTableToWidgets;
+
+    protected function getHeaderWidgets(): array
+    {
+        return PolicyResource::getWidgets();
+    }
 
     protected function getHeaderActions(): array
     {
