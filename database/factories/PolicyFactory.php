@@ -87,6 +87,9 @@ class PolicyFactory extends Factory
             $lifeInsurance = $this->generateLifeInsuranceData($mainApplicant);
         }
 
+        // Created date according to year
+        $year = Carbon::now()->subYears(rand(0, 1))->year;
+        
         if ($year === Carbon::now()->year) {
             $month = rand(1, Carbon::now()->month);
             $maxDay = $month === Carbon::now()->month ? Carbon::now()->day - 1 : 28;
