@@ -331,9 +331,20 @@ class PolicyResource extends Resource
                             ->select('policies.*');
                     })
                     ->html()
+                    ->tooltip(function(string $state, Policy $record): string {
+                        $spanishMonths = [
+                            'January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril',
+                            'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto',
+                            'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'
+                        ];
+                        $month = $record->contact->created_at->format('F');
+                        $year = $record->contact->created_at->format('Y');
+                        $spanishDate = $spanishMonths[$month] . ' de ' . $year;
+                        $customers = 'Cliente desde ' . $spanishDate;
+                        return $customers;
+                    })
                     ->formatStateUsing(function(string $state, Policy $record): string {
                         $customers = $state;
-
                         foreach ($record->additional_applicants as $applicant) {
                             $medicaidBadge = '';
                             if (isset($applicant->medicaid_client) && $applicant->medicaid_client) {

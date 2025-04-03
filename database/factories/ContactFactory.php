@@ -16,6 +16,8 @@ use App\Enums\Gender;
  */
 class ContactFactory extends Factory
 {
+    private static $lastCreatedAt = null;
+
     /**
      * The name of the factory's corresponding model.
      *
@@ -37,6 +39,11 @@ class ContactFactory extends Factory
     {
         parent::__construct();
         $this->faker = \Faker\Factory::create('es_VE');
+        
+        if (self::$lastCreatedAt === null) {
+            $latestContact = Contact::orderBy('created_at', 'desc')->first();
+            self::$lastCreatedAt = $latestContact ? $latestContact->created_at : now()->subYears(4);
+        }
     }
 
     /**
@@ -56,6 +63,13 @@ class ContactFactory extends Factory
 
         return [
             // System Fields
+            'created_at' => function() {
+                $minDate = self::$lastCreatedAt;
+                $maxDate = Carbon::instance(clone $minDate)->addHours(48);
+                $newDate = $this->faker->dateTimeBetween($minDate, $maxDate);
+                self::$lastCreatedAt = $newDate;
+                return $newDate;
+            },
             'is_lead' => $this->faker->boolean,
             'status' => $this->faker->randomElement(['active', 'inactive']),
             'priority' => $this->faker->randomElement(['high', 'medium', 'low']),

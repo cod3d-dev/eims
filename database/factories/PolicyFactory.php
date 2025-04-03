@@ -16,6 +16,7 @@ use App\ValueObjects\Applicant;
 use App\ValueObjects\ApplicantCollection;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Policy;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Policy>
@@ -24,6 +25,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PolicyFactory extends Factory
 {
+    private static $lastCreatedAt = null;
+
     /**
      * Define the model's default state.
      *
@@ -39,6 +42,11 @@ class PolicyFactory extends Factory
     {
         parent::__construct();
         $this->faker = \Faker\Factory::create('es_VE');
+        
+        if (self::$lastCreatedAt === null) {
+            $latestPolicy = Policy::orderBy('created_at', 'desc')->first();
+            self::$lastCreatedAt = $latestPolicy ? $latestPolicy->created_at : now()->subYears(4);
+        }
     }
 
 
@@ -88,19 +96,10 @@ class PolicyFactory extends Factory
         }
 
         // Created date according to year
-        $year = Carbon::now()->subYears(rand(0, 1))->year;
-        
-        if ($year === Carbon::now()->year) {
-            $month = rand(1, Carbon::now()->month);
-            $maxDay = $month === Carbon::now()->month ? Carbon::now()->day - 1 : 28;
-            $day = $maxDay > 0 ? rand(1, $maxDay) : 1;
-        } else {
-            $month = rand(1, 12);
-            $day = rand(1, 28);
-        }
-        
-        $createdDate = Carbon::create($year, $month, $day, 0, 0, 0);
-
+        $minDate = max($contact->created_at, self::$lastCreatedAt);
+        $maxDate = Carbon::instance(clone $minDate)->addHours(36);
+        $createdDate = $this->faker->dateTimeBetween($minDate, $maxDate);
+        self::$lastCreatedAt = $createdDate;
 
         return [
             // Basic Information
@@ -331,7 +330,7 @@ class PolicyFactory extends Factory
                 'is_tobacco_user' => $this->faker->boolean(20),
                 'is_pregnant' => $gender === 'female' ? $this->faker->boolean(10) : false,
                 'is_eligible_for_coverage' => $this->faker->boolean(90),
-                'medicaid_client' => $this->faker->boolean(30),
+                'medicaid_client' => $this->faker->boolean(20),
                 'country_of_birth' => $this->faker->country(),
                 'civil_status' => $relationship === 'child' ? 'single' : $this->faker->randomElement(['single', 'married', 'divorced', 'widowed']),
                 'phone1' => $relationship === 'child' && $age < 18 ? null : $this->faker->phoneNumber(),
