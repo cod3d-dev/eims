@@ -286,7 +286,7 @@ class PolicyResource extends Resource
         return $table
             ->columns([
                 // Insurance Account name
-                Tables\Columns\TextColumn::make('id')
+                Tables\Columns\TextColumn::make('contact.id')
                     // format getting the first letter of each word in the name in uppercase
                     ->label('#')
                     ->badge()
@@ -486,6 +486,15 @@ class PolicyResource extends Resource
                Tables\Filters\SelectFilter::make('policy_type')
                    ->options(PolicyType::class)
                    ->label('Tipo de Poliza'),
+                // Tables\Filters\SelectFilter::make('total_applicants_with_medicaid')
+                //     ->label('Aplicantes con Medicaid')
+                //     ->options([
+                //         0 => 'Sin Medicaid',
+                //         1 => 'Con Medicaid'
+                //     ])
+                //     ->query(function ($query, $value) {
+                //         return $query->where('total_applicants_with_medicaid', $value);
+                //     }),
                 Tables\Filters\Filter::make('meetsKynectFPLRequirement')
                     ->label('Cumple FPL')
                     ->form([
